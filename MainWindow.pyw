@@ -42,6 +42,9 @@ class MainWindow(tk.Tk):
         self.CurrentStation = self.Settings.LastStationLoad()
         self.StationList = self.CSV.GetStationList()
         self.CurrentDayType = self.CSV.GetDayTypeList()[0]
+        self.CSVNowNextTrainClassUP = self.CSV.CreateNowNextTrainClass(self.CurrentDayType, "상", self.CurrentStation)
+        self.CSVNowNextTrainClassDOWN = self.CSV.CreateNowNextTrainClass(self.CurrentDayType, "하", self.CurrentStation)
+        
 
     def Update_DayType(self):
         '''
@@ -63,45 +66,40 @@ class MainWindow(tk.Tk):
         self.UIFrame.UpdateLabel([self.CurrentStation, self.CurrentDayType, self.StationList[0] ,self.StationList[-1] ])
     
     def Update_TrainInfo(self):
-        TmpList = self.CSV.GetNowNextTrain(Direction = "상", Station = self.CurrentStation, DayType = self.CurrentDayType)
-        TmpList2 = self.CSV.GetNowNextTrain(Direction = "하", Station = self.CurrentStation, DayType = self.CurrentDayType)
+
         TmpList3 = []
         TmpList4 = []
         TmpList5 = []
-        for Tmp in TmpList + TmpList2 :
+
+        UPNowNextDict = self.CSVNowNextTrainClassUP.GetNowNextTrain()
+        DOWNNowNextDict=self.CSVNowNextTrainClassDOWN.GetNowNextTrain()
+        
+        for Tmp in UPNowNextDict + DOWNNowNextDict :
             if Tmp == -1 :
                 TmpList3.append("-")
             else:
-                TmpList3.append(Tmp[:-3])
-        
+                TmpList3.append(Tmp["ArriveTime"][:-3])
+
+
         self.UIFrame.UpdateTime(TmpList3)
 
-
-        for Tmp in TmpList:
+        for Tmp in UPNowNextDict + DOWNNowNextDict:
             if Tmp != -1:
-                Dest = self.CSV.GetTrainDestination(Direction = "상", Station = self.CurrentStation, DayType = self.CurrentDayType, TargetTime = Tmp)
+                Dest = Tmp["Destination"]
                 if Dest not in [self.StationList[0], self.StationList[-1]]:
                     TmpList4.append(Dest+" 행")
                     continue
             TmpList4.append(None)
 
-        for Tmp in TmpList2:
-            if Tmp != -1:
-                Dest = self.CSV.GetTrainDestination(Direction = "하", Station = self.CurrentStation, DayType = self.CurrentDayType, TargetTime = Tmp)
-                if Dest not in [self.StationList[0], self.StationList[-1]]:
-                    TmpList4.append(Dest+" 행")
-                    print("동작")
-                    continue
-            TmpList4.append(None)
 
         self.UIFrame.AddDestination(TmpList4)
                 
         
-        for Tmp in TmpList + TmpList2 :
+        for Tmp in UPNowNextDict + DOWNNowNextDict :
             if Tmp == -1 :
                 TmpList5.append("24:00:00")
             else:
-                TmpList5.append(Tmp)
+                TmpList5.append(Tmp["ArriveTime"])
         
         LeftTimeList = list(map(TimeDiffInt, TmpList5))
 
@@ -124,8 +122,10 @@ class MainWindow(tk.Tk):
             self.CurrentStation = self.StationList[0]
         else :
             self.CurrentStation = self.UIMenuBar.GetVar()["Station"]
-
+            
         self.CurrentDayType = self.UIMenuBar.GetVar()["DayType"]
+        self.CSVNowNextTrainClassUP = self.CSV.CreateNowNextTrainClass(self.CurrentDayType, "상", self.CurrentStation)
+        self.CSVNowNextTrainClassDOWN = self.CSV.CreateNowNextTrainClass(self.CurrentDayType, "하", self.CurrentStation)
         self.Update_UI_Label()
         self.Update_TrainInfo()
         self.Settings.StationChangeSave(self.CurrentLine, self.CurrentStation)
@@ -137,7 +137,7 @@ class MainWindow(tk.Tk):
 
     def Open_HelpMsg(self):
         global Version
-        MsgStr = f'공공데이터 포털 열차 시간표 기반의 표시 프로그램입니다.\n\n버전: {Version}\n만든이: realoven@gmail.com\n라이센스: GPL 3.0 '
+        MsgStr = f'공공데이터 포털 열차 시간표 기반 표시 프로그램\n\n버전: {Version}\n만든이: realoven@gmail.com\n라이센스: GPL 3.0 '
         tk.messagebox.showinfo(title = "열차 시간 알리미 도움말", message = MsgStr)
         
         

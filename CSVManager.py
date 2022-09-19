@@ -109,48 +109,82 @@ class CSVClass:
 
                 return TrainTimeList
         
-
-
-    def GetNowNextTrain(self, DayType, Direction, Station):
-        '''
-        현재 시간에 기반하여 이번 열차와 다음 열차를 받아오는 함수
-        '''
-        NowTime = time.strftime("%H:%M:%S")
-        TrainTimeList = self.GetTrainTimeList(DayType, Direction, Station)
-
-        NowTrain = self.SearchTrain(TrainTimeList, NowTime)
+    def CreateNowNextTrainClass(self, DayType, Direction, Station):
         
-        if NowTrain == -1 or NowTrain == TrainTimeList[-1]: #이번에 차량이 없거나 현재가 마지막 차량일 경우 마지막 차량을 확인하지 않으면 00:01 다음 차량으로 첫 차가 표시되는 문제가 있음
-            return [NowTrain, -1]
+        TrainDict = self.GetTrainDict(DayType, Direction)
+        rTrainDict = {}
+        for (TrainNo, TrainTimeList) in TrainDict.items():
 
-        NextTrain = self.SearchTrain(TrainTimeList, NowTrain)
-        return [NowTrain, NextTrain]
-
-    def SearchTrain(self, TrainTimeListVal, TargetTimeVal):
-        TrainTimeList = TrainTimeListVal
-        
-        if TimeStr_2_Sec(TargetTimeVal) < TimeStr_2_Sec(TrainTimeList[-1]) and TimeStr_2_Sec(TrainTimeList[0]) > TimeStr_2_Sec(TrainTimeList[-1]) : #마지막 차가 0:00:00 일때를 고려
-            TargetTimeList = TargetTimeVal.split(":")
-            TargetTime = str( str((int(TargetTimeList[0])+24))+":"+ TargetTimeList[1]+":"+ TargetTimeList[2])
-            TargetTimeSec = TimeStr_2_Sec(TargetTime)
+            ArriveTime = TrainTimeList[self.CurrentStationList.index(Station)]
+            if ArriveTime == None:
+                continue
             
-        else:
-            TargetTime = TargetTimeVal
-            TargetTimeSec = TimeStr_2_Sec(TargetTime)
-            
-
-        for Col in TrainTimeList:
-            if TimeStr_2_Sec(Col) < TimeStr_2_Sec(TrainTimeList[0]): #첫차랑 비교 하여 24시가 넘게 운행할 시 시간표 상에는 24:00:00이 아닌 0:00:00으로 적혀진 것 고려
-                ListTimeSec = TimeStr_2_Sec(Col) + TimeStr_2_Sec("24:00:00")
+            #열차 목적지 찾기 시작
+            if Direction =="하": #하선일 경우 역순으로 찾아야 함
+                tmplist = TrainDict[TrainNo][::-1]
             else:
-                ListTimeSec = TimeStr_2_Sec(Col)
-                
-            if TargetTimeSec < ListTimeSec: #TargetTime 다음 보다 클 경우 해당 시간 값 반환 (이번 열차 검색 완료) 
-                return Col
-
-        return -1 #못 찾았을 경우 -1 반환
+                tmplist = TrainDict[TrainNo]
             
+            for TimeList in tmplist :
+                if TimeList != None :
+                    TmpTime = TimeList
+                    break
+                
+            Destination = self.CurrentStationList[TrainDict[TrainNo].index(TmpTime)]
+            #열차 목적지 찾기 끝
 
+            ArriveTimeSec = TimeStr_2_Sec(ArriveTime)
+            rTrainDict[TrainNo] = {"ArriveTime": ArriveTime,
+                                   "ArriveTimeSec" : ArriveTimeSec,
+                                   "Destination": Destination}
+            
+        return self.NowNextTrainClass(rTrainDict)
+
+    class NowNextTrainClass:
+        
+        def __init__(self, TrainDict):
+            self.TrainDict = TrainDict
+            TrainNoList = list(map(int, TrainDict.keys()))
+            
+            FirstTrainNumber = str(min(TrainNoList))
+            self.LastTrainNumber = str(max(TrainNoList))
+            self.FirstTrainTimeSec = TrainDict[FirstTrainNumber]["ArriveTimeSec"]
+            self.LastTrainTimeSec = TrainDict[self.LastTrainNumber]["ArriveTimeSec"]
+            
+        def SearchTrainNo(self, TargetTimeStr):
+            TargetTimeSec = TimeStr_2_Sec(TargetTimeStr)
+            if TargetTimeSec < self.LastTrainTimeSec and  self.LastTrainTimeSec < self.FirstTrainTimeSec :
+                TargetTimeSec = TargetTimeSec + TimeStr_2_Sec("24:00:00")
+                
+                
+            for (TrainNo, Keys) in self.TrainDict.items() :
+
+                SearchTimeSec = Keys["ArriveTimeSec"]
+                if Keys["ArriveTimeSec"] < self.FirstTrainTimeSec :
+                    SearchTimeSec = SearchTimeSec + TimeStr_2_Sec("24:00:00")
+
+                if SearchTimeSec > TargetTimeSec :
+                    return TrainNo
+
+            return -1
+            
+        def GetNowNextTrain(self):
+            NowTime = time.strftime("%H:%M:%S")
+            NowTrainNo = self.SearchTrainNo(NowTime)
+            
+            
+            if NowTrainNo == self.LastTrainNumber :
+                NowTrainDict = self.TrainDict[NowTrainNo]
+                return [NowTrainDict , -1]
+            
+            if NowTrainNo != -1:
+                NowTrainDict = self.TrainDict[NowTrainNo]
+                NextTrainNo = self.SearchTrainNo(NowTrainDict["ArriveTime"])
+                NextTrainDict = self.TrainDict[NextTrainNo]
+                return [NowTrainDict, NextTrainDict]
+             
+            return [-1, -1]
+   
     def GetTrainDict(self, DayType, Direction):
         AdType = "도착"
         CurrentStationIndex = None
@@ -165,7 +199,7 @@ class CSVClass:
                 TrainNumIndexDict[self.CSVData[0].index(Col)] = Col[-4:] #인덱스 번호 - 열차 번호쌍 저장
 
         for Row in self.CSVData[self.CSVHeaderRowNum + 1: ] :
-            if (DayType in Row[0] and Direction in Row[0]):
+            if (DayType in Row[self.CSVDayColNum] and Direction in Row[self.CSVDayColNum]):
                 for Col in Row:
                     if Col in self.CurrentStationList:
                         #현재 검색중인 역사의 인덱스 번호 계산
@@ -232,7 +266,9 @@ def TimeStr_2_Sec(TStr):
     return TmpInt
 
 
-#a = CSVClass(1)
+#a = CSVClass(2) 
+#na = a.CreateNowNextTrainClass("평일","상", "이곡")
+#print(na.GetNowNextTrain())
 #print(a.GetNowNextTrain('평일', '하', '용산'))
 #print(a.GetTrainDestination('평일', '하', '용산', '23:35:15'))
 
