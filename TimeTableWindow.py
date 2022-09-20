@@ -73,6 +73,12 @@ class TimeTableWindow(tk.Toplevel):
                 self.TLineSelection = tk.IntVar(value = self.Line)
                 self.TStationSelection = tk.StringVar(value = self.Station) 
                 self.TDayTypeSelection = tk.StringVar(value = self.DayType)
+                self.TFirstTrainLEFTVar = tk.StringVar(value = "-")
+                self.TLastTrainLEFTVar = tk.StringVar(value = "- (-행)")
+                self.TLastTrainLEFTVar2 = tk.StringVar(value = "- (-행)")
+                self.TFirstTrainRIGHTVar = tk.StringVar(value = "-")
+                self.TLastTrainRIGHTVar = tk.StringVar(value = "- (-행)")
+                self.TLastTrainRIGHTVar2 = tk.StringVar(value = "- (-행)")
 
             def DrawUI(self):
                 self.TFrame0 = tk.LabelFrame(master = self, labelanchor="n", text="호선 설정")
@@ -80,6 +86,9 @@ class TimeTableWindow(tk.Toplevel):
                 self.TFrame2 = tk.LabelFrame(master = self, labelanchor="n", text="휴일 설정")
                 self.TFrame3 = tk.LabelFrame(master = self, labelanchor="n", text=f'{self.StationList[0]} 방면')
                 self.TFrame4 = tk.LabelFrame(master = self, labelanchor="n", text=f'{self.StationList[-1]} 방면')
+                self.TFrame5 = tk.Frame(master= self.TFrame3)
+                self.TFrame6 = tk.Frame(master= self.TFrame4)
+                
                 self.TSpinBox = ttk.Spinbox(master = self.TFrame0, from_ = SettingsManager.SettingsClass().GetLineTotal()[0],
                                             to= SettingsManager.SettingsClass().GetLineTotal()[-1],
                                             textvariable = self.TLineSelection, command = self.ChangeLine)
@@ -89,17 +98,51 @@ class TimeTableWindow(tk.Toplevel):
                 for txt in self.DayTypeList:           
                     self.TRadioButton = tk.Radiobutton(master=self.TFrame2, text=txt, variable=self.TDayTypeSelection, value=txt, command= self.UpdateTable)
                     self.TRadioButton.pack(fill=tk.X, side=tk.LEFT, expand=True)
+
+
+                self.TFirstTrainLEFTCap = tk.Label(master=self.TFrame5, anchor="w", text = "첫차:")
+                self.TFirstTrainLEFT = tk.Label(master = self.TFrame5, anchor="w", textvariable = self.TFirstTrainLEFTVar)
+                self.TLastTrainLEFTCap = tk.Label(master=self.TFrame5, anchor="w", text = "막차:")
+                self.TLastTrainLEFT = tk.Label(master = self.TFrame5, anchor="w", textvariable = self.TLastTrainLEFTVar)
+                self.TLastTrainLEFT2 = tk.Label(master = self.TFrame5, anchor="w", textvariable = self.TLastTrainLEFTVar2)
+                
+                self.TFirstTrainRIGHTCap = tk.Label(master=self.TFrame6, anchor="w", text = "첫차:")
+                self.TFirstTrainRIGHT = tk.Label(master = self.TFrame6, anchor="w", textvariable = self.TFirstTrainRIGHTVar)
+                self.TLastTrainRIGHTCap = tk.Label(master=self.TFrame6, anchor="w", text = "막차:")
+                self.TLastTrainRIGHT = tk.Label(master=self.TFrame6, anchor="w", textvariable = self.TLastTrainRIGHTVar)
+                self.TLastTrainRIGHT2 = tk.Label(master=self.TFrame6, anchor="w", textvariable = self.TLastTrainRIGHTVar2)
+                
                 
                 self.TFrame0.pack(fill=tk.X, expand=False)
                 self.TFrame1.pack(fill=tk.X, expand=False)
                 self.TFrame2.pack(fill=tk.X, expand=False)
                 self.TFrame3.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
                 self.TFrame4.pack(fill=tk.BOTH, side=tk.RIGHT, expand=True)
+                self.TFrame5.pack(fill=tk.X)
+                self.TFrame6.pack(fill=tk.X)
                 self.TSpinBox.pack(fill=tk.X, expand=True, padx = 2, pady = 2)
                 self.TComboBox.pack(fill=tk.X, expand=True, padx = 2, pady = 2)
                 self.TComboBox.bind('<<ComboboxSelected>>', lambda e: self.UpdateTable())
                 self.TComboBox.bind('<Return>', lambda e: self.UpdateTable())
 
+                self.TFrame5.columnconfigure(1, weight=1)
+                self.TFrame5.columnconfigure(2, weight=1)
+                self.TFirstTrainLEFTCap.grid(row = 0, column = 0)
+                self.TFirstTrainLEFT.grid(row = 0, column = 1, columnspan = 2)
+                self.TLastTrainLEFTCap.grid(row = 1, column = 0)
+                self.TLastTrainLEFT.grid(row = 1, column = 1, sticky="e")
+                self.TLastTrainLEFT2.grid(row = 1, column = 2, sticky="w")
+                
+                self.TFrame6.columnconfigure(1, weight=1)
+                self.TFrame6.columnconfigure(2, weight=1)
+                self.TFirstTrainRIGHTCap.grid(row = 0, column = 0)
+                self.TFirstTrainRIGHT.grid(row = 0, column = 1, columnspan = 2)
+                self.TLastTrainRIGHTCap.grid(row = 1, column = 0)
+                self.TLastTrainRIGHT.grid(row = 1, column = 1, sticky="e")
+                self.TLastTrainRIGHT2.grid(row = 1, column = 2, sticky="w")
+                
+                
+                
                 self.TListBoxLEFT = tk.Listbox(master=self.TFrame3, selectmode="browse")
                 self.TListBoxRIGHT = tk.Listbox(master=self.TFrame4, selectmode="browse")
                 self.TScrollBarLEFT = tk.Scrollbar(master = self.TFrame3)
@@ -142,7 +185,15 @@ class TimeTableWindow(tk.Toplevel):
                     Dest = self.CSV.GetTrainDestination(Direction = "하", Station = self.TStationSelection.get(), DayType = self.TDayTypeSelection.get(), TargetTime = TableContent)
                     self.TListBoxRIGHT.insert(tk.END, f'{TableContent[:-3]} ({Dest} 행)')
 
+                self.TFirstTrainLEFTVar.set(f'{self.TListBoxLEFT.get(0)}')
+                self.TLastTrainLEFTVar.set(f'{self.TListBoxLEFT.get(self.TListBoxLEFT.size()-2)}')
+                self.TLastTrainLEFTVar2.set(f'{self.TListBoxLEFT.get(self.TListBoxLEFT.size()-1)}')
 
+                self.TFirstTrainRIGHTVar.set(f'{self.TListBoxRIGHT.get(0)}')
+                self.TLastTrainRIGHTVar.set(f'{self.TListBoxRIGHT.get(self.TListBoxRIGHT.size()-2)}')
+                self.TLastTrainRIGHTVar2.set(f'{self.TListBoxRIGHT.get(self.TListBoxRIGHT.size()-1)}')
+
+                
             def ChangeLine(self):
                 self.CSV.SetLine(self.TLineSelection.get())
                 self.StationList = self.CSV.GetStationList()

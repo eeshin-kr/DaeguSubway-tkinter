@@ -67,41 +67,41 @@ class MainWindow(tk.Tk):
     
     def Update_TrainInfo(self):
 
-        TmpList3 = []
-        TmpList4 = []
-        TmpList5 = []
+        TmpList0 = []
+        TmpList1 = []
+        TmpList2 = []
 
         UPNowNextDict = self.CSVNowNextTrainClassUP.GetNowNextTrain()
         DOWNNowNextDict=self.CSVNowNextTrainClassDOWN.GetNowNextTrain()
         
         for Tmp in UPNowNextDict + DOWNNowNextDict :
             if Tmp == -1 :
-                TmpList3.append("-")
+                TmpList0.append("-")
             else:
-                TmpList3.append(Tmp["ArriveTime"][:-3])
+                TmpList0.append(Tmp["ArriveTime"][:-3])
 
 
-        self.UIFrame.UpdateTime(TmpList3)
+        self.UIFrame.UpdateTime(TmpList0)
 
         for Tmp in UPNowNextDict + DOWNNowNextDict:
             if Tmp != -1:
                 Dest = Tmp["Destination"]
                 if Dest not in [self.StationList[0], self.StationList[-1]]:
-                    TmpList4.append(Dest+" 행")
+                    TmpList1.append(Dest+" 행")
                     continue
-            TmpList4.append(None)
+            TmpList1.append(None)
 
 
-        self.UIFrame.AddDestination(TmpList4)
+        self.UIFrame.AddDestination(TmpList1)
                 
         
         for Tmp in UPNowNextDict + DOWNNowNextDict :
             if Tmp == -1 :
-                TmpList5.append("24:00:00")
+                TmpList2.append("24:00:00")
             else:
-                TmpList5.append(Tmp["ArriveTime"])
+                TmpList2.append(Tmp["ArriveTime"])
         
-        LeftTimeList = list(map(TimeDiffInt, TmpList5))
+        LeftTimeList = list(map(TimeDiffInt, TmpList2))
 
         self.UpdateFrameID = self.after(min(LeftTimeList)*1000, self.Update_TrainInfo)
 
@@ -139,14 +139,6 @@ class MainWindow(tk.Tk):
         global Version
         MsgStr = f'공공데이터 포털 열차 시간표 기반 표시 프로그램\n\n버전: {Version}\n만든이: realoven@gmail.com\n라이센스: GPL 3.0 '
         tk.messagebox.showinfo(title = "열차 시간 알리미 도움말", message = MsgStr)
-        
-        
-    def Run(self):
-        self.Set_ProcessClassInit()
-        self.Update_DayType()
-        self.Update_UI_Label()
-        self.Update_TrainInfo()
-        self.mainloop()
         
     class UIMenuBarClass(tk.Menu):
         tkmaster = None

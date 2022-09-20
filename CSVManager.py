@@ -174,14 +174,14 @@ class CSVClass:
             
             
             if NowTrainNo == self.LastTrainNumber :
-                NowTrainDict = self.TrainDict[NowTrainNo]
-                return [NowTrainDict , -1]
+                NowTrainInfo = self.TrainDict[NowTrainNo]
+                return [NowTrainInfo , -1]
             
             if NowTrainNo != -1:
-                NowTrainDict = self.TrainDict[NowTrainNo]
-                NextTrainNo = self.SearchTrainNo(NowTrainDict["ArriveTime"])
-                NextTrainDict = self.TrainDict[NextTrainNo]
-                return [NowTrainDict, NextTrainDict]
+                NowTrainInfo = self.TrainDict[NowTrainNo]
+                NextTrainNo = self.SearchTrainNo(NowTrainInfo["ArriveTime"])
+                NextTrainInfo = self.TrainDict[NextTrainNo]
+                return [NowTrainInfo, NextTrainInfo]
              
             return [-1, -1]
    
@@ -229,10 +229,10 @@ class CSVClass:
     def GetDayTypeList(self):
         return self.DayTypeList
 
-    def IsLastTrain(self, DayType, Direction, Station, TargetTime):
-        if self.GetTrainTimeList(DayType, Direction, Station)[-1] == TargetTime : return True
-        else: return False
-
+##    def IsLastTrain(self, DayType, Direction, Station, TargetTime):
+##        if self.GetTrainTimeList(DayType, Direction, Station)[-1] == TargetTime : return True
+##        else: return False
+##
     def GetTrainDestination(self, DayType, Direction, Station, TargetTime):
         TrainDict = self.GetTrainDict(DayType, Direction)
         DictStationIndex = self.CurrentStationList.index(Station)
