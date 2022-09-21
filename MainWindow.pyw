@@ -8,12 +8,13 @@ import GetDayType
 import SettingsManager
 import TimeTableWindow
 
-Version = "0.5.3"
+Version = "0.5.4"
 class MainWindow(tk.Tk):
     Title = "열차 시간 알리미"
     Settings = None
     CSV = None
     UpdateFrameID = None
+    UpdateLeftTimeID = None
 
     def __init__(self):
         super().__init__()
@@ -28,7 +29,7 @@ class MainWindow(tk.Tk):
     def Set_Window(self):
         self.title (f'{self.Title}')
         self.resizable(False, False)
-        #self.attributes("-toolwindow", True)
+        self.attributes("-toolwindow", True)
 
     def Set_UI(self):
         self.UIMenuBar = self.UIMenuBarClass(self)
@@ -44,6 +45,7 @@ class MainWindow(tk.Tk):
         self.CurrentDayType = self.CSV.GetDayTypeList()[0]
         self.CSVNowNextTrainClassUP = self.CSV.CreateNowNextTrainClass(self.CurrentDayType, "상", self.CurrentStation)
         self.CSVNowNextTrainClassDOWN = self.CSV.CreateNowNextTrainClass(self.CurrentDayType, "하", self.CurrentStation)
+        self.Option_ShowTimeLeft = False
         
 
     def Update_DayType(self):
@@ -71,10 +73,10 @@ class MainWindow(tk.Tk):
         TmpList1 = []
         TmpList2 = []
 
-        UPNowNextDict = self.CSVNowNextTrainClassUP.GetNowNextTrain()
-        DOWNNowNextDict=self.CSVNowNextTrainClassDOWN.GetNowNextTrain()
+        self.UPNowNextDict = self.CSVNowNextTrainClassUP.GetNowNextTrain()
+        self.DOWNNowNextDict=self.CSVNowNextTrainClassDOWN.GetNowNextTrain()
         
-        for Tmp in UPNowNextDict + DOWNNowNextDict :
+        for Tmp in self.UPNowNextDict + self.DOWNNowNextDict :
             if Tmp == -1 :
                 TmpList0.append("-")
             else:
@@ -83,7 +85,7 @@ class MainWindow(tk.Tk):
 
         self.UIFrame.UpdateTime(TmpList0)
 
-        for Tmp in UPNowNextDict + DOWNNowNextDict:
+        for Tmp in self.UPNowNextDict + self.DOWNNowNextDict:
             if Tmp != -1:
                 Dest = Tmp["Destination"]
                 if Dest not in [self.StationList[0], self.StationList[-1]]:
@@ -95,7 +97,7 @@ class MainWindow(tk.Tk):
         self.UIFrame.AddDestination(TmpList1)
                 
         
-        for Tmp in UPNowNextDict + DOWNNowNextDict :
+        for Tmp in self.UPNowNextDict + self.DOWNNowNextDict :
             if Tmp == -1 :
                 TmpList2.append("24:00:00")
             else:
@@ -104,6 +106,38 @@ class MainWindow(tk.Tk):
         LeftTimeList = list(map(TimeDiffInt, TmpList2))
 
         self.UpdateFrameID = self.after(min(LeftTimeList)*1000, self.Update_TrainInfo)
+
+    def Refresh_Options(self):
+        if self.Option_TimeLeft == True and self.UpdateFrameID != None :
+            self.Cancel_Update_LeftTime()
+            self.Update_LeftTime()
+            
+
+    def Change_Options(self):
+        self.Option_TimeLeft = self.UIMenuBar.GetVar()["Option_TimeLeft"]
+        if self.Option_TimeLeft == True:
+            self.Update_LeftTime()
+        else:
+            self.Cancel_Update_LeftTime()
+
+    def Update_LeftTime(self):
+        TmpList0 = []
+
+        for Tmp in self.UPNowNextDict + self.DOWNNowNextDict :
+            if Tmp == -1 :
+                TmpList0.append("-")
+            else:
+                TmpList0.append((Tmp["ArriveTime"]))
+
+        LeftTimeList = list(map(TimeDiffInt, TmpList0))
+        LeftTimeList2 = [(str(el//60)+"m"+ str(el%60) + "s") for el in LeftTimeList]
+        self.UIFrame.UpdateTimeLeft(LeftTimeList2)
+        self.UpdateLeftTimeID = self.after(1000, self.Update_LeftTime)
+
+    def Cancel_Update_LeftTime(self):
+        self.UIFrame.UpdateTimeLeft([None for a in range(4)])
+        self.after_cancel(self.UpdateLeftTimeID)
+        
 
     def Cancel_Update_TrainInfo(self):
         self.after_cancel(self.UpdateFrameID)
@@ -128,6 +162,7 @@ class MainWindow(tk.Tk):
         self.CSVNowNextTrainClassDOWN = self.CSV.CreateNowNextTrainClass(self.CurrentDayType, "하", self.CurrentStation)
         self.Update_UI_Label()
         self.Update_TrainInfo()
+        self.Refresh_Options()
         self.Settings.StationChangeSave(self.CurrentLine, self.CurrentStation)
         
     def Open_TimeTable(self):
@@ -149,26 +184,28 @@ class MainWindow(tk.Tk):
             self.parent = master
             self.Create()
 
-        def Create(self):      
+        def Create(self):
+
+            self.LinesVar = tk.IntVar()
+            self.StationsVar = tk.StringVar()
+            self.DayTypeVar = tk.StringVar()
+            self.Option_ShowLeftTime = tk.BooleanVar()
+
             self.Menu_Tools = tk.Menu(master = self, tearoff = 0)
             self.Menu_Settings = tk.Menu(master = self, tearoff = 0)
             self.Menu_Lines = tk.Menu(master = self.Menu_Settings, tearoff = 0)        
             self.Menu_Stations = tk.Menu(master = self.Menu_Settings, tearoff = 0)
             self.Menu_DayType = tk.Menu(master = self.Menu_Settings, tearoff = 0)
 
-            self.add_cascade(label="도구", menu = self.Menu_Tools)
-            self.Menu_Tools.add_command(label="시간표 보기", command = self.CallTimeTable)
-            
+            self.add_command(label="시간표 보기", command = self.CallTimeTable)
             
             self.add_cascade(label="설정", menu = self.Menu_Settings)
             self.Menu_Settings.add_cascade(label="호선 설정", menu = self.Menu_Lines)
             self.Menu_Settings.add_cascade(label="역 설정", menu = self.Menu_Stations)
             self.Menu_Settings.add_cascade(label="요일 설정", menu = self.Menu_DayType)
+            self.Menu_Settings.add_separator()
+            self.Menu_Settings.add_checkbutton(label="남은 시간 표시", variable = self.Option_ShowLeftTime, command = self.CallUpdateLeftTime)
             self.add_command(label='도움말', command = self.CallHelpMsg)
-
-            self.LinesVar = tk.IntVar()
-            self.StationsVar = tk.StringVar()
-            self.DayTypeVar = tk.StringVar()
 
             self.tkmaster.config(menu = self)            
 
@@ -194,6 +231,9 @@ class MainWindow(tk.Tk):
         def CallADCalWindow(self):
             self.parent.Open_ADCalWindow()
 
+        def CallUpdateLeftTime(self):
+            self.parent.Change_Options()
+
         def CallHelpMsg(self):
             self.parent.Open_HelpMsg()
         
@@ -206,7 +246,8 @@ class MainWindow(tk.Tk):
         def GetVar(self):
             return {"Line": self.LinesVar.get(),
                     "Station": self.StationsVar.get(),
-                    "DayType": self.DayTypeVar.get()}
+                    "DayType": self.DayTypeVar.get(),
+                    "Option_TimeLeft": self.Option_ShowLeftTime.get()}
             
 
 
@@ -254,6 +295,10 @@ class MainWindow(tk.Tk):
             for frame in TFrameList:
                 self.TDestLabelList.append(self.UILabelClass(master = frame))
 
+
+            self.TTimeLeftLabelList = []
+            for frame in TFrameList:
+                self.TTimeLeftLabelList.append(self.UILabelClass(master = frame))
             
 
         def UpdateLabel(self, Val):
@@ -276,6 +321,17 @@ class MainWindow(tk.Tk):
                     el.Visible()
                 else:
                     el.Invisible()
+            
+                    
+        def UpdateTimeLeft(self, Val):
+            ZippedList = zip(self.TTimeLeftLabelList, Val)
+            for el, val in ZippedList:
+                if val != None:
+                    el.ChangeStr(val)
+                    el.Visible()
+                else:
+                    el.Invisible()
+                
 
         class UILabelClass(tk.Label):
             def __init__(self, master, string = "-"):
