@@ -107,6 +107,17 @@ class MainWindow(tk.Tk):
 
         self.UpdateFrameID = self.after(min(LeftTimeList)*1000, self.Update_TrainInfo)
 
+    def Set_AlwaysOnTop(self):
+        if self.UIMenuBar.GetVar()["Option_AlwaysOnTop"] == True:
+            self.attributes('-topmost', True)
+            self.update()
+        else:
+            self.attributes('-topmost', False)
+            self.update()
+            
+        
+
+
     def Refresh_Options(self):
         if self.Option_TimeLeft == True and self.UpdateFrameID != None :
             self.Cancel_Update_LeftTime()
@@ -127,11 +138,10 @@ class MainWindow(tk.Tk):
             if Tmp == -1 :
                 TmpList0.append("-")
             else:
-                TmpList0.append((Tmp["ArriveTime"]))
+                TmpTime = TimeDiffInt(Tmp["ArriveTime"])
+                TmpList0.append(f'{TmpTime//60}m {TmpTime%60}s')
 
-        LeftTimeList = list(map(TimeDiffInt, TmpList0))
-        LeftTimeList2 = [(str(el//60)+"m"+ str(el%60) + "s") for el in LeftTimeList]
-        self.UIFrame.UpdateTimeLeft(LeftTimeList2)
+        self.UIFrame.UpdateTimeLeft(TmpList0)
         self.UpdateLeftTimeID = self.after(1000, self.Update_LeftTime)
 
     def Cancel_Update_LeftTime(self):
@@ -169,7 +179,6 @@ class MainWindow(tk.Tk):
         TimeTableWin = TimeTableWindow.TimeTableWindow(self, self.CurrentLine, self.CurrentStation, self.CurrentDayType)
         TimeTableWin.mainloop()
 
-
     def Open_HelpMsg(self):
         global Version
         MsgStr = f'공공데이터 포털 열차 시간표 기반 표시 프로그램\n\n버전: {Version}\n만든이: realoven@gmail.com\n라이센스: GPL 3.0 '
@@ -189,7 +198,9 @@ class MainWindow(tk.Tk):
             self.LinesVar = tk.IntVar()
             self.StationsVar = tk.StringVar()
             self.DayTypeVar = tk.StringVar()
-            self.Option_ShowLeftTime = tk.BooleanVar()
+            self.Option_ShowLeftTime = tk.BooleanVar(value=False)
+            self.Option_AlwaysOnTop = tk.BooleanVar(value=self.parent.attributes("-topmost"))
+            
 
             self.Menu_Tools = tk.Menu(master = self, tearoff = 0)
             self.Menu_Settings = tk.Menu(master = self, tearoff = 0)
@@ -205,6 +216,7 @@ class MainWindow(tk.Tk):
             self.Menu_Settings.add_cascade(label="요일 설정", menu = self.Menu_DayType)
             self.Menu_Settings.add_separator()
             self.Menu_Settings.add_checkbutton(label="남은 시간 표시", variable = self.Option_ShowLeftTime, command = self.CallUpdateLeftTime)
+            self.Menu_Settings.add_checkbutton(label="창을 항상 위에 표시", variable = self.Option_AlwaysOnTop, command = self.CallSetAlawaysOnTop)
             self.add_command(label='도움말', command = self.CallHelpMsg)
 
             self.tkmaster.config(menu = self)            
@@ -237,7 +249,9 @@ class MainWindow(tk.Tk):
         def CallHelpMsg(self):
             self.parent.Open_HelpMsg()
         
-
+        def CallSetAlawaysOnTop(self):
+            self.parent.Set_AlwaysOnTop()
+            
         def ChangeVar(self, Line, Station, DayType):
             self.LinesVar.set(Line)
             self.StationsVar.set(Station)
@@ -247,7 +261,8 @@ class MainWindow(tk.Tk):
             return {"Line": self.LinesVar.get(),
                     "Station": self.StationsVar.get(),
                     "DayType": self.DayTypeVar.get(),
-                    "Option_TimeLeft": self.Option_ShowLeftTime.get()}
+                    "Option_TimeLeft": self.Option_ShowLeftTime.get(),
+                    "Option_AlwaysOnTop": self.Option_AlwaysOnTop.get()}
             
 
 
