@@ -25,5 +25,5 @@ Tkinter로 구성한 대구 도시철도 시간표 표시 프로그램
   3. MainWindow.exe 실행
 
 # 사용한 파일
-* 로고 사진: https://en.wikipedia.org/wiki/File:Aiga_railtransportation_25.svg
-* 로고 폰트: 나눔바른고딕
+* EXE파일 로고 사진: https://en.wikipedia.org/wiki/File:Aiga_railtransportation_25.svg
+* EXE파일 로고 폰트: 나눔바른고딕
