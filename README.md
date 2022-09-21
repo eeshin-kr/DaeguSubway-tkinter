@@ -1,7 +1,7 @@
 # DaeguSubway-tkinter
 Tkinter로 구성한 대구 도시철도 시간표 표시 프로그램
 
-![메인 화면](https://user-images.githubusercontent.com/60684821/191521610-b56a08da-2268-42cd-b008-ac932b4cc5c6.png)
+![메인 화면](https://user-images.githubusercontent.com/60684821/191521610-b56a08da-2268-42cd-b008-ac932b4cc5c6.png)  
 ![역사별 시간표](https://user-images.githubusercontent.com/60684821/191521860-d7fb9ee6-b67f-4c9f-b0f2-62d611ea470a.png)
 ![열차별 시간표](https://user-images.githubusercontent.com/60684821/191521873-5cd1f9b5-4238-49b6-9823-ff42602b1827.png)
 
