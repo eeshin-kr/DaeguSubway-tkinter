@@ -126,7 +126,7 @@ class MainWindow(tk.Tk):
 
     def Change_Options(self):
         self.Option_ShowTimeLeft = self.UIMenuBar.GetVar()["Option_TimeLeft"]
-        if self.Option_TimeLeft == True:
+        if self.Option_ShowTimeLeft == True:
             self.Update_LeftTime()
         else:
             self.Cancel_Update_LeftTime()
