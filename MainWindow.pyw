@@ -119,13 +119,13 @@ class MainWindow(tk.Tk):
 
 
     def Refresh_Options(self):
-        if self.Option_TimeLeft == True and self.UpdateFrameID != None :
+        if self.Option_ShowTimeLeft == True and self.UpdateFrameID != None :
             self.Cancel_Update_LeftTime()
             self.Update_LeftTime()
             
 
     def Change_Options(self):
-        self.Option_TimeLeft = self.UIMenuBar.GetVar()["Option_TimeLeft"]
+        self.Option_ShowTimeLeft = self.UIMenuBar.GetVar()["Option_TimeLeft"]
         if self.Option_TimeLeft == True:
             self.Update_LeftTime()
         else:
