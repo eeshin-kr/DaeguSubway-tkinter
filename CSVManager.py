@@ -171,19 +171,21 @@ class CSVClass:
         def GetNowNextTrain(self):
             NowTime = time.strftime("%H:%M:%S")
             NowTrainNo = self.SearchTrainNo(NowTime)
+
+            if NowTrainNo == -1 :
+                return [-1, -1]
             
+            NowTrainInfo = self.TrainDict[NowTrainNo]
+            NowTrainInfo["TrainNo"] = NowTrainNo
             
             if NowTrainNo == self.LastTrainNumber :
-                NowTrainInfo = self.TrainDict[NowTrainNo]
                 return [NowTrainInfo , -1]
             
-            if NowTrainNo != -1:
-                NowTrainInfo = self.TrainDict[NowTrainNo]
-                NextTrainNo = self.SearchTrainNo(NowTrainInfo["ArriveTime"])
-                NextTrainInfo = self.TrainDict[NextTrainNo]
-                return [NowTrainInfo, NextTrainInfo]
-             
-            return [-1, -1]
+            NextTrainNo = self.SearchTrainNo(NowTrainInfo["ArriveTime"])
+            NextTrainInfo = self.TrainDict[NextTrainNo]
+            NextTrainInfo["TrainNo"] = NextTrainNo
+            
+            return [NowTrainInfo, NextTrainInfo]
    
     def GetTrainDict(self, DayType, Direction):
         AdType = "도착"

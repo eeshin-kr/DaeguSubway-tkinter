@@ -8,7 +8,7 @@ import GetDayType
 import SettingsManager
 import TimeTableWindow
 
-Version = "0.5.4"
+Version = "0.5.5"
 class MainWindow(tk.Tk):
     Title = "열차 시간 알리미"
     Settings = None
@@ -46,6 +46,7 @@ class MainWindow(tk.Tk):
         self.CSVNowNextTrainClassUP = self.CSV.CreateNowNextTrainClass(self.CurrentDayType, "상", self.CurrentStation)
         self.CSVNowNextTrainClassDOWN = self.CSV.CreateNowNextTrainClass(self.CurrentDayType, "하", self.CurrentStation)
         self.Option_ShowTimeLeft = False
+        self.Option_ShowTrainNo = False
         
 
     def Update_DayType(self):
@@ -78,34 +79,25 @@ class MainWindow(tk.Tk):
         
         for Tmp in self.UPNowNextDict + self.DOWNNowNextDict :
             if Tmp == -1 :
-                TmpList0.append("-")
+                TmpList0.append("-") #열차 시각을 표시
+                TmpList1.append(None) #행선지 표시, 막차일 경우 표시하지 않음
+                TmpList2.append("24:00:00") #다음 업데이트 시간 계산용도
             else:
                 TmpList0.append(Tmp["ArriveTime"][:-3])
+                TmpList2.append(Tmp["ArriveTime"])
+                #행선지 표시
+                if Tmp["Destination"] in [self.StationList[0], self.StationList[-1]]:
+                    TmpList1.append(None)# 행선지가 시점/종점일 경우 표시하지 않음
+                else:
+                    TmpList1.append(Tmp["Destination"]+" 행")#행선지가 시점/종점이 아닐 경우 표시
 
 
         self.UIFrame.UpdateTime(TmpList0)
-
-        for Tmp in self.UPNowNextDict + self.DOWNNowNextDict:
-            if Tmp != -1:
-                Dest = Tmp["Destination"]
-                if Dest not in [self.StationList[0], self.StationList[-1]]:
-                    TmpList1.append(Dest+" 행")
-                    continue
-            TmpList1.append(None)
-
-
         self.UIFrame.AddDestination(TmpList1)
                 
-        
-        for Tmp in self.UPNowNextDict + self.DOWNNowNextDict :
-            if Tmp == -1 :
-                TmpList2.append("24:00:00")
-            else:
-                TmpList2.append(Tmp["ArriveTime"])
-        
         LeftTimeList = list(map(TimeDiffInt, TmpList2))
-
-        self.UpdateFrameID = self.after(min(LeftTimeList)*1000, self.Update_TrainInfo)
+        InfoUpdateTimeAfter = min(LeftTimeList) * 1000
+        self.UpdateFrameID = self.after(InfoUpdateTimeAfter, self.Update_TrainInfo)
 
     def Set_AlwaysOnTop(self):
         if self.UIMenuBar.GetVar()["Option_AlwaysOnTop"] == True:
@@ -115,21 +107,54 @@ class MainWindow(tk.Tk):
             self.attributes('-topmost', False)
             self.update()
             
-        
-
 
     def Refresh_Options(self):
-        if self.Option_ShowTimeLeft == True and self.UpdateFrameID != None :
+        if self.Option_ShowTimeLeft == True:
             self.Cancel_Update_LeftTime()
             self.Update_LeftTime()
-            
+
+        if self.Option_ShowTrainNo == True:
+            self.Cancel_Update_ShowTrainNo()
+            self.Update_TrainNo()
 
     def Change_Options(self):
-        self.Option_ShowTimeLeft = self.UIMenuBar.GetVar()["Option_TimeLeft"]
-        if self.Option_ShowTimeLeft == True:
-            self.Update_LeftTime()
-        else:
-            self.Cancel_Update_LeftTime()
+        MenuSettingsDict = self.UIMenuBar.GetVar()
+        if self.Option_ShowTimeLeft != MenuSettingsDict["Option_TimeLeft"]:
+            self.Option_ShowTimeLeft = MenuSettingsDict["Option_TimeLeft"]
+            if self.Option_ShowTimeLeft == True:
+                self.Update_LeftTime()
+            elif self.Option_ShowTimeLeft == False :
+                self.Cancel_Update_LeftTime()
+                self.UIFrame.UpdateTimeLeft([None for a in range(4)])
+
+        if self.Option_ShowTrainNo != MenuSettingsDict["Option_TrainNo"]:
+            self.Option_ShowTrainNo = MenuSettingsDict["Option_TrainNo"]
+            if self.Option_ShowTrainNo == True:
+                self.Update_TrainNo()
+            elif self.Option_ShowTrainNo == False:
+                self.Cancel_Update_ShowTrainNo()
+                self.UIFrame.UpdateTrainNo([None for a in range(4)])
+                
+
+        
+    def Update_TrainNo(self):
+        TmpList0 = []
+        TmpList1 = []
+        
+        for Tmp in self.UPNowNextDict + self.DOWNNowNextDict :
+            if Tmp == -1:
+                TmpList0.append("-")
+                TmpList1.append("24:00:00")
+            else:
+                TmpList0.append(Tmp["TrainNo"])
+                TmpList1.append(Tmp["ArriveTime"])
+
+        LeftTimeList = list(map(TimeDiffInt, TmpList1))
+        InfoUpdateTimeAfter = min(LeftTimeList) * 1000
+
+        self.UIFrame.UpdateTrainNo(TmpList0)
+        self.UpdateTrainNoID = self.after(InfoUpdateTimeAfter, self.Update_TrainNo)
+        
 
     def Update_LeftTime(self):
         TmpList0 = []
@@ -144,11 +169,15 @@ class MainWindow(tk.Tk):
         self.UIFrame.UpdateTimeLeft(TmpList0)
         self.UpdateLeftTimeID = self.after(1000, self.Update_LeftTime)
 
-    def Cancel_Update_LeftTime(self):
-        self.UIFrame.UpdateTimeLeft([None for a in range(4)])
-        self.after_cancel(self.UpdateLeftTimeID)
-        
 
+    def Cancel_Update_ShowTrainNo(self):
+        if self.UpdateTrainNoID != None:
+            self.after_cancel(self.UpdateTrainNoID)
+        
+    def Cancel_Update_LeftTime(self):
+        if self.UpdateLeftTimeID != None:
+            self.after_cancel(self.UpdateLeftTimeID)
+        
     def Cancel_Update_TrainInfo(self):
         self.after_cancel(self.UpdateFrameID)
 
@@ -200,6 +229,7 @@ class MainWindow(tk.Tk):
             self.DayTypeVar = tk.StringVar()
             self.Option_ShowLeftTime = tk.BooleanVar(value=False)
             self.Option_AlwaysOnTop = tk.BooleanVar(value=self.parent.attributes("-topmost"))
+            self.Option_ShowTrainNo = tk.BooleanVar(value=False)
             
 
             self.Menu_Tools = tk.Menu(master = self, tearoff = 0)
@@ -215,6 +245,7 @@ class MainWindow(tk.Tk):
             self.Menu_Settings.add_cascade(label="역 설정", menu = self.Menu_Stations)
             self.Menu_Settings.add_cascade(label="요일 설정", menu = self.Menu_DayType)
             self.Menu_Settings.add_separator()
+            self.Menu_Settings.add_checkbutton(label="열차번호 표시", variable = self.Option_ShowTrainNo, command = self.CallUpdateTrainNo)
             self.Menu_Settings.add_checkbutton(label="남은 시간 표시", variable = self.Option_ShowLeftTime, command = self.CallUpdateLeftTime)
             self.Menu_Settings.add_checkbutton(label="창을 항상 위에 표시", variable = self.Option_AlwaysOnTop, command = self.CallSetAlawaysOnTop)
             self.add_command(label='도움말', command = self.CallHelpMsg)
@@ -243,6 +274,9 @@ class MainWindow(tk.Tk):
         def CallADCalWindow(self):
             self.parent.Open_ADCalWindow()
 
+        def CallUpdateTrainNo(self):
+            self.parent.Change_Options()
+
         def CallUpdateLeftTime(self):
             self.parent.Change_Options()
 
@@ -262,7 +296,8 @@ class MainWindow(tk.Tk):
                     "Station": self.StationsVar.get(),
                     "DayType": self.DayTypeVar.get(),
                     "Option_TimeLeft": self.Option_ShowLeftTime.get(),
-                    "Option_AlwaysOnTop": self.Option_AlwaysOnTop.get()}
+                    "Option_AlwaysOnTop": self.Option_AlwaysOnTop.get(),
+                    "Option_TrainNo": self.Option_ShowTrainNo.get()}
             
 
 
@@ -298,22 +333,33 @@ class MainWindow(tk.Tk):
             
             #라벨 구성
             TFrameList = [self.TFrameTOP0, self.TFrameTOP1, self.TFrameBOT0, self.TFrameBOT1]
+            for frame in TFrameList:
+                frame.columnconfigure(0, weight=1)
+                frame.columnconfigure(1, weight=1)
+                frame.columnconfigure(2, weight=1)
+                
+                
+            
+            self.TTrainNoList = []
+            for frame in TFrameList:
+                self.TTrainNoList.append(self.UILabelClass(master=frame, gridrow = 0, gridcol = 1))
+                
+            
             self.TTimeLabelList = []
             for frame in TFrameList:
-                Tmp = self.UILabelClass(master = frame)
-                Tmp.pack()
+                Tmp = self.UILabelClass(master = frame, gridrow = 1, gridcol = 1)
+                Tmp.Visible()
                 self.TTimeLabelList.append(Tmp)
 
-            
                 
             self.TDestLabelList = []
             for frame in TFrameList:
-                self.TDestLabelList.append(self.UILabelClass(master = frame))
+                self.TDestLabelList.append(self.UILabelClass(master = frame, gridrow = 2, gridcol = 1))
 
 
             self.TTimeLeftLabelList = []
             for frame in TFrameList:
-                self.TTimeLeftLabelList.append(self.UILabelClass(master = frame))
+                self.TTimeLeftLabelList.append(self.UILabelClass(master = frame, gridrow = 3, gridcol = 1))
             
 
         def UpdateLabel(self, Val):
@@ -340,28 +386,41 @@ class MainWindow(tk.Tk):
                     
         def UpdateTimeLeft(self, Val):
             ZippedList = zip(self.TTimeLeftLabelList, Val)
-            for el, val in ZippedList:
+            for (el, val) in ZippedList:
                 if val != None:
                     el.ChangeStr(val)
                     el.Visible()
                 else:
                     el.Invisible()
+
+        def UpdateTrainNo(self, Val):
+            ZippedList = zip(self.TTrainNoList, Val)
+            for (el, val) in ZippedList:
+                if val != None:
+                    el.ChangeStr(val)
+                    el.Visible()
+                else:
+                    el.Invisible()
+
+
                 
 
         class UILabelClass(tk.Label):
-            def __init__(self, master, string = "-"):
+            def __init__(self, master, gridrow, gridcol, string = "-"):
                 super().__init__(master)
                 self.LabelStringVar = tk.StringVar(value = string)
                 self.config(textvariable=self.LabelStringVar)
+                self.row = gridrow
+                self.col = gridcol
                 
             def ChangeStr(self, string):
                 self.LabelStringVar.set(string)
 
             def Visible(self):
-                self.pack()
+                self.grid(row=self.row, column = self.col, sticky="nswe")
 
             def Invisible(self):
-                self.pack_forget()
+                self.grid_forget()
 
 
 def TimeStr_2_Sec(TStr):

@@ -71,6 +71,7 @@ class TimeTableWindow(tk.Toplevel):
                 self.StationList = self.CSV.GetStationList()
                 self.DayTypeList = self.CSV.GetDayTypeList()
                 self.TLineSelection = tk.IntVar(value = self.Line)
+                self.TLineSelection2 = tk.IntVar(value = self.Line)
                 self.TStationSelection = tk.StringVar(value = self.Station) 
                 self.TDayTypeSelection = tk.StringVar(value = self.DayType)
                 self.TFirstTrainLEFTVar = tk.StringVar(value = "-")
@@ -91,7 +92,7 @@ class TimeTableWindow(tk.Toplevel):
                 
                 self.TSpinBox = ttk.Spinbox(master = self.TFrame0, from_ = SettingsManager.SettingsClass().GetLineTotal()[0],
                                             to= SettingsManager.SettingsClass().GetLineTotal()[-1],
-                                            textvariable = self.TLineSelection, command = self.ChangeLine)
+                                            textvariable = self.TLineSelection2, command = self.ChangeLine)
                 self.TComboBox = ttk.Combobox(master = self.TFrame1, textvariable = self.TStationSelection)
                 self.TComboBox['values'] = self.StationList
                 
@@ -121,6 +122,7 @@ class TimeTableWindow(tk.Toplevel):
                 self.TFrame5.pack(fill=tk.X)
                 self.TFrame6.pack(fill=tk.X)
                 self.TSpinBox.pack(fill=tk.X, expand=True, padx = 2, pady = 2)
+                self.TSpinBox.bind('<Return>', lambda e: self.ChangeLine())
                 self.TComboBox.pack(fill=tk.X, expand=True, padx = 2, pady = 2)
                 self.TComboBox.bind('<<ComboboxSelected>>', lambda e: self.UpdateTable())
                 self.TComboBox.bind('<Return>', lambda e: self.UpdateTable())
@@ -195,7 +197,10 @@ class TimeTableWindow(tk.Toplevel):
 
                 
             def ChangeLine(self):
-                self.CSV.SetLine(self.TLineSelection.get())
+                if self.CSV.SetLine(self.TLineSelection2.get()) == -1:
+                    self.TLineSelection2.set(self.TLineSelection.get())
+                    return -1
+                self.TLineSelection.set(self.TLineSelection2.get())
                 self.StationList = self.CSV.GetStationList()
                 self.TStationSelection.set(self.StationList[0])
                 self.TComboBox['values'] = self.StationList
@@ -218,12 +223,13 @@ class TimeTableWindow(tk.Toplevel):
                 self.StationList = self.CSV.GetStationList()
                 self.DayTypeList = self.CSV.GetDayTypeList()
                 self.TLineSelection = tk.IntVar(value = TopWinLine)
+                self.TLineSelection2 = tk.IntVar(value = TopWinLine)
                 self.TDirectionSelection = tk.StringVar(value = "상")
                 self.TDayTypeSelection = tk.StringVar(value = TopWinDayType)
 
             def DrawUI(self):
                 self.columnconfigure(1, weight=1)
-                self.rowconfigure(0, weight=1)
+                self.rowconfigure(0,weight=1)
                 self.OptionFrame = tk.Frame(master = self)
                 self.OptionFrame.grid(row = 0, column = 0, sticky = "sn")
                 self.TFrame0 = tk.LabelFrame(master = self.OptionFrame, text="호선", labelanchor="n")
@@ -232,7 +238,7 @@ class TimeTableWindow(tk.Toplevel):
             
                 self.TSpinBox = ttk.Spinbox(master = self.TFrame0, from_ = SettingsManager.SettingsClass().GetLineTotal()[0],
                             to= SettingsManager.SettingsClass().GetLineTotal()[-1],
-                            textvariable = self.TLineSelection, command = self.ChangeLine)
+                            textvariable = self.TLineSelection2, command = self.ChangeLine)
 
                 self.TRadioButtonGroup0 = []
                 self.TRadioButtonGroup0.append( tk.Radiobutton(master = self.TFrame1, text = f'{self.StationList[0]} 방면',
@@ -307,7 +313,10 @@ class TimeTableWindow(tk.Toplevel):
 
 
             def ChangeLine(self):
-                self.CSV.SetLine(self.TLineSelection.get())
+                if self.CSV.SetLine(self.TLineSelection2.get()) == -1:
+                    self.TLineSelection2.set(self.TLineSelection.get())
+                    return -1
+                self.TLineSelection.set(self.TLineSelection2.get())
                 self.StationList = self.CSV.GetStationList()
                 self.TRadioButtonGroup0[0].config(text = f'{self.StationList[0]} 방면')
                 self.TRadioButtonGroup0[1].config(text = f'{self.StationList[-1]} 방면')                    
