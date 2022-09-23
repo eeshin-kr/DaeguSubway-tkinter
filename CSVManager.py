@@ -105,7 +105,7 @@ class CSVClass:
 
                 for Col in Row :
                     if(":" in Col):
-                        TrainTimeList.append(Col)
+                        TrainTimeList.append([self.CSVData[self.CSVHeaderRowNum ][Row.index(Col)][-4:], Col])
 
                 return TrainTimeList
         

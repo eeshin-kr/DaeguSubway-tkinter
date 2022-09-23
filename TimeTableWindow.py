@@ -174,18 +174,18 @@ class TimeTableWindow(tk.Toplevel):
                                                             Station= self.TStationSelection.get())
 
                 for TableContent in TimeTableContentLEFT[:-2] :
-                    self.TListBoxLEFT.insert(tk.END, f'{TableContent[:-3]}')
+                    self.TListBoxLEFT.insert(tk.END, f'{TableContent[0]} | {TableContent[1][:-3]}')
 
                 for TableContent in TimeTableContentLEFT[-2:] :
-                    Dest = self.CSV.GetTrainDestination(Direction = "상", Station = self.TStationSelection.get(), DayType = self.TDayTypeSelection.get(), TargetTime = TableContent)
-                    self.TListBoxLEFT.insert(tk.END, f'{TableContent[:-3]} ({Dest} 행)')
+                    Dest = self.CSV.GetTrainDestination(Direction = "상", Station = self.TStationSelection.get(), DayType = self.TDayTypeSelection.get(), TargetTime = TableContent[1])
+                    self.TListBoxLEFT.insert(tk.END, f'{TableContent[0]} | {TableContent[1][:-3]} ({Dest} 행)')
 
                 for TableContent in TimeTableContentRIGHT[:-2]:
-                    self.TListBoxRIGHT.insert(tk.END, f'{TableContent[:-3]}')
+                    self.TListBoxRIGHT.insert(tk.END, f'{TableContent[0]} | {TableContent[1][:-3]}')
                     
                 for TableContent in TimeTableContentRIGHT[-2:]:
-                    Dest = self.CSV.GetTrainDestination(Direction = "하", Station = self.TStationSelection.get(), DayType = self.TDayTypeSelection.get(), TargetTime = TableContent)
-                    self.TListBoxRIGHT.insert(tk.END, f'{TableContent[:-3]} ({Dest} 행)')
+                    Dest = self.CSV.GetTrainDestination(Direction = "하", Station = self.TStationSelection.get(), DayType = self.TDayTypeSelection.get(), TargetTime = TableContent[1])
+                    self.TListBoxRIGHT.insert(tk.END, f'{TableContent[0]} | {TableContent[1][:-3]} ({Dest} 행)')
 
                 self.TFirstTrainLEFTVar.set(f'{self.TListBoxLEFT.get(0)}')
                 self.TLastTrainLEFTVar.set(f'{self.TListBoxLEFT.get(self.TListBoxLEFT.size()-2)}')
