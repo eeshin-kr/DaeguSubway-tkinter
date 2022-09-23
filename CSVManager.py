@@ -87,27 +87,29 @@ class CSVClass:
         self.CSVStationColNum = StationCol
 
 
-    def GetTrainTimeList(self, DayType, Direction, Station):
+    def GetStationTimeDict(self, DayType, Direction, Station):
         AdType = "도착"
-        TrainTimeList = []
+        TrainTimeDict = {}
 
         if Station not in self.CurrentStationList :
             raise NameError("검색하려는 역이 존재하지 않습니다.")
 
-        if Station in [self.CurrentStationList[0], self.CurrentStationList[-1]] : #시점 및 시점일 때는 도착, 출발 정보가 하나 밖에 없으므로 AdType을 Station으로 바꾸어 AdType 조건을 회피한다.
-            AdType = Station
-
         for Row in self.CSVData[self.CSVHeaderRowNum + 1 : ] :
             if (DayType   in Row[self.CSVDayColNum] and
                 Direction in Row[self.CSVDayColNum] and
-                Station   in Row                    and
-                AdType    in Row):
+                Station   in Row):
 
                 for Col in Row :
                     if(":" in Col):
-                        TrainTimeList.append([self.CSVData[self.CSVHeaderRowNum ][Row.index(Col)][-4:], Col])
+                        TrainNo = int(self.CSVData[self.CSVHeaderRowNum][Row.index(Col)][-4:])
+                        if AdType in Row :
+                            TrainTimeDict[TrainNo] = Col
+                            
+                        elif TrainNo not in TrainTimeDict.keys():
+                            TrainTimeDict[TrainNo] = Col
 
-                return TrainTimeList
+        return dict(sorted(TrainTimeDict.items()))
+                
         
     def CreateNowNextTrainClass(self, DayType, Direction, Station):
         
@@ -143,11 +145,11 @@ class CSVClass:
     class NowNextTrainClass:
         
         def __init__(self, TrainDict):
-            self.TrainDict = TrainDict
-            TrainNoList = list(map(int, TrainDict.keys()))
+            self.TrainDict = dict(sorted(TrainDict.items()))
+            TrainNoList = list(self.TrainDict.keys())
             
-            FirstTrainNumber = str(min(TrainNoList))
-            self.LastTrainNumber = str(max(TrainNoList))
+            FirstTrainNumber = TrainNoList[0]
+            self.LastTrainNumber = TrainNoList[-1]
             self.FirstTrainTimeSec = TrainDict[FirstTrainNumber]["ArriveTimeSec"]
             self.LastTrainTimeSec = TrainDict[self.LastTrainNumber]["ArriveTimeSec"]
             
@@ -193,33 +195,33 @@ class CSVClass:
         TrainNumDict = {}
         TrainNumIndexDict = {}
         EmptyList = [ None for a in range(len(self.CurrentStationList)) ] #역사 갯수 만큼의 None이 든 리스트
-        SkipList = [ None for a in range(len(self.CurrentStationList)) ] # 출발, 도착을 했는지 기록하는 리스트
+        EachList = [ None for a in range(len(self.CurrentStationList)) ] #한 열에 몇 개의 요소가 있는지 기록하는 리스트
 
         for Col in self.CSVData[self.CSVHeaderRowNum] :
             if Col[-4:].isnumeric() :
-                TrainNumDict[Col[-4:]] = EmptyList #열차 번호 - 시간대 리스트 저장
-                TrainNumIndexDict[self.CSVData[0].index(Col)] = Col[-4:] #인덱스 번호 - 열차 번호쌍 저장
+                TrainNum = int(Col[-4:])
+                TrainNumDict[TrainNum] = EmptyList #열차 번호 - 시간대 리스트 저장
+                TrainNumIndexDict[self.CSVData[self.CSVHeaderRowNum].index(Col)] = TrainNum #인덱스 번호 - 열차 번호쌍 저장
+                
+        for Row in self.CSVData[self.CSVHeaderRowNum + 1: ] :            
+            if (DayType in Row[self.CSVDayColNum] and Direction in Row[self.CSVDayColNum]):                
+                CurrentStationIndex = self.CurrentStationList.index(Row[self.CSVStationColNum])
 
-        for Row in self.CSVData[self.CSVHeaderRowNum + 1: ] :
-            if (DayType in Row[self.CSVDayColNum] and Direction in Row[self.CSVDayColNum]):
-                for Col in Row:
-                    if Col in self.CurrentStationList:
-                        #현재 검색중인 역사의 인덱스 번호 계산
-                        CurrentStationIndex = self.CurrentStationList.index(Col)
-
-
+                #계산 양을 줄이기 위함, 한 열차가 해당 역에서 도착 또는 출발만 있는 경우 시간표 상에 도착과 출발
+                #갯수가 차이난다. 차이가 나는 경우 해당 역사에는 출발 또는 도착만 있는 열차가 존재하므로 이 때는 연산을 진행한다.
+                OccupiedEl = len([el for el in Row if el!="" ])
+                if EachList[CurrentStationIndex] == OccupiedEl and AdType not in Row: 
+                    continue
+                EachList[CurrentStationIndex] = OccupiedEl
+                
                 for Col in Row :
-                    if SkipList[CurrentStationIndex] : break
-
                     if ":" in Col:
-                        a = TrainNumIndexDict[Row.index(Col)]
-                        tmp = list(TrainNumDict[a])
+                        TrainNum = TrainNumIndexDict[Row.index(Col)]
+                        tmp = list(TrainNumDict[TrainNum])
                         tmp[CurrentStationIndex] = Col
-                        TrainNumDict[a] = tmp
-                        
-                if AdType in Row :
-                    SkipList[CurrentStationIndex] = True
-                        
+                        if TrainNumDict[TrainNum][CurrentStationIndex] == None or (AdType in Row):
+                            TrainNumDict[TrainNum] = tmp
+                            
         for (Key, Val) in list(TrainNumDict.items()): #시간이 기록되지 않은 열차번호 제거
             if Val == EmptyList : del TrainNumDict[Key]
 
@@ -231,10 +233,6 @@ class CSVClass:
     def GetDayTypeList(self):
         return self.DayTypeList
 
-##    def IsLastTrain(self, DayType, Direction, Station, TargetTime):
-##        if self.GetTrainTimeList(DayType, Direction, Station)[-1] == TargetTime : return True
-##        else: return False
-##
     def GetTrainDestination(self, DayType, Direction, Station, TargetTime):
         TrainDict = self.GetTrainDict(DayType, Direction)
         DictStationIndex = self.CurrentStationList.index(Station)
@@ -271,6 +269,6 @@ def TimeStr_2_Sec(TStr):
 #a = CSVClass(2) 
 #na = a.CreateNowNextTrainClass("평일","상", "이곡")
 #print(na.GetNowNextTrain())
-#print(a.GetNowNextTrain('평일', '하', '용산'))
+#print(a.GetStationTimeDict('평일', '상', '수성구청'))
 #print(a.GetTrainDestination('평일', '하', '용산', '23:35:15'))
 

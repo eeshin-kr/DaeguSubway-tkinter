@@ -165,27 +165,27 @@ class TimeTableWindow(tk.Toplevel):
                 self.TListBoxLEFT.delete(0, tk.END) #리스트 박스 초기화
                 self.TListBoxRIGHT.delete(0, tk.END)
 
-                TimeTableContentLEFT = self.CSV.GetTrainTimeList(DayType = self.TDayTypeSelection.get(),
+                TimeTableContentLEFT = self.CSV.GetStationTimeDict(DayType = self.TDayTypeSelection.get(),
                                                             Direction="상",
                                                             Station= self.TStationSelection.get())
                 
-                TimeTableContentRIGHT = self.CSV.GetTrainTimeList(DayType = self.TDayTypeSelection.get(),
+                TimeTableContentRIGHT = self.CSV.GetStationTimeDict(DayType = self.TDayTypeSelection.get(),
                                                             Direction="하",
                                                             Station= self.TStationSelection.get())
 
-                for TableContent in TimeTableContentLEFT[:-2] :
-                    self.TListBoxLEFT.insert(tk.END, f'{TableContent[0]} | {TableContent[1][:-3]}')
+                for (TrainNum, TrainTime)  in list(TimeTableContentLEFT.items())[:-2] :
+                    self.TListBoxLEFT.insert(tk.END, f'{TrainNum} | {TrainTime[:-3]}')
 
-                for TableContent in TimeTableContentLEFT[-2:] :
-                    Dest = self.CSV.GetTrainDestination(Direction = "상", Station = self.TStationSelection.get(), DayType = self.TDayTypeSelection.get(), TargetTime = TableContent[1])
-                    self.TListBoxLEFT.insert(tk.END, f'{TableContent[0]} | {TableContent[1][:-3]} ({Dest} 행)')
+                for (TrainNum, TrainTime)  in list(TimeTableContentLEFT.items())[-2:]  :
+                    #Dest = self.CSV.GetTrainDestination(Direction = "상", Station = self.TStationSelection.get(), DayType = self.TDayTypeSelection.get(), TargetTime = TableContent[1])
+                    self.TListBoxLEFT.insert(tk.END, f'{TrainNum} | {TrainTime[:-3]} (Dest 행)')
 
-                for TableContent in TimeTableContentRIGHT[:-2]:
-                    self.TListBoxRIGHT.insert(tk.END, f'{TableContent[0]} | {TableContent[1][:-3]}')
+                for (TrainNum, TrainTime)  in list(TimeTableContentRIGHT.items())[:-2] :
+                    self.TListBoxRIGHT.insert(tk.END, f'{TrainNum} | {TrainTime[:-3]}')
                     
-                for TableContent in TimeTableContentRIGHT[-2:]:
-                    Dest = self.CSV.GetTrainDestination(Direction = "하", Station = self.TStationSelection.get(), DayType = self.TDayTypeSelection.get(), TargetTime = TableContent[1])
-                    self.TListBoxRIGHT.insert(tk.END, f'{TableContent[0]} | {TableContent[1][:-3]} ({Dest} 행)')
+                for (TrainNum, TrainTime)  in list(TimeTableContentRIGHT.items())[-2:]  :
+                    #Dest = self.CSV.GetTrainDestination(Direction = "하", Station = self.TStationSelection.get(), DayType = self.TDayTypeSelection.get(), TargetTime = TableContent[1])
+                    self.TListBoxRIGHT.insert(tk.END, f'{TrainNum} | {TrainTime[:-3]} (Dest 행)')
 
                 self.TFirstTrainLEFTVar.set(f'{self.TListBoxLEFT.get(0)}')
                 self.TLastTrainLEFTVar.set(f'{self.TListBoxLEFT.get(self.TListBoxLEFT.size()-2)}')
