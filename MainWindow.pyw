@@ -8,7 +8,7 @@ import GetDayType
 import SettingsManager
 import TimeTableWindow
 
-Version = "0.5.5"
+Version = "0.5.6"
 class MainWindow(tk.Tk):
     Title = "열차 시간 알리미"
     Settings = None

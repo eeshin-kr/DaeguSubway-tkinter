@@ -1,70 +1,73 @@
-'''
-외부에서 오늘이 평일/토요일/휴일인지 받아오기 위한 함수입니다.
-'''
 import time
 import urllib.request
-import urllib.error
+import urllib.parse
 import json
+import os
 
-typeDict = {1: "평일",
-            2: "토요일",
-            3: "휴일"}
 
-def GetTodayServiceDayNaver():
-    '''
-    모바일 네이버 지도에서 휴일 정보를 받아오는 함수입니다.
-    '''
-    CurrentTimeStr = time.strftime("%Y%m%d%H%M%S")
-    NaverMapAPI = f'https://m.map.naver.com/pubtrans/getSubwayTimestamp.naver?inquiryDateTime={CurrentTimeStr}'
-    req = urllib.request.Request(NaverMapAPI, data=None,
-                                 headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'}
-                                )
-    
+PublicAnniversaryURL = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
+SetParams = {"serviceKey": "qwOsuA49e64sAt996zL7akPoB8B6xE8CyygnFiVOq24VOaz+vmR+usEwsayufqCPOc4wH5HhUaAqh/OqW6s7og==",
+            "pageNo": 1,
+            "numOfRows": 366,
+            "solYear": 2022,
+            "_type": "json"}
+PAData = None
+
+def DownloadData():
+    global PAData
+    global PublicAnniversaryURL
+    global SetParams
+    Thisyear = time.strftime("%Y")
+    SetParams["solYear"] = Thisyear
+    PAFilePath = "./Cache/"
+    PAFileName = f'getRestDelInfoY{Thisyear}.json'
+    PAFullFilePath = PAFilePath + PAFileName
+    parameters = urllib.parse.urlencode(SetParams)
     try:
-        with urllib.request.urlopen(req) as response:
-            Encoding = response.info().get_content_charset()
-            Data = response.read()
-            
-        jsonData = json.loads(Data.decode(Encoding))
-        todayServiceDay = jsonData['result']['dateType']
-        if todayServiceDay not in list(typeDict.keys()):
-            raise NameError("DayType에 맞지 않는 현상 발생")
-        return typeDict.get(todayServiceDay)
+        with urllib.request.urlopen(url=PublicAnniversaryURL +"?"+ parameters) as response:
+            response_text = response.read()
+            PAData = json.loads(response_text)
+            if PAData['response']['header']['resultCode'] != "00":
+                raise NameError(JsonData['response']['header']['resultMsg'])
+            if os.path.isdir(PAFilePath) == False :
+                os.mkdir(PAFilePath)
+            with open(PAFullFilePath, 'wb') as File:
+                File.write(response_text)        
 
-    except (urllib.error.HTTPError, NameError) as e:
-         print(e)
-         return -1
+    except json.decoder.JSONDecodeError:
+        raise NameError("JSON 다운로드 실패")
         
-    except:
-        return -1
+def LoadData():
+    global PAData
+    Thisyear = time.strftime("%Y")
+    PAFilePath = "./Cache/"
+    PAFileName = f'getRestDelInfoY{Thisyear}.json'
+    PAFullFilePath = PAFilePath + PAFileName
+    try: 
+        with open(PAFullFilePath, 'r', encoding='UTF8') as File:
+            PAFile = File.read()
+        PAData = json.loads(PAFile)
+        if PAData['response']['header']['resultCode'] != "00":
+            raise FileNotFoundError
+
+    except (FileNotFoundError, json.decoder.JSONDecodeError):
+        DownloadData()
 
 
-def GetTodayServiceDayNaverPC():
-    '''
-    PC 네이버 지도에서 휴일 정보를 받아오는 함수입니다. 파일 용량이 모바일 네이버 지도에서 받는 정보 보다 큽니다.
-    '''
-    
-    NaverMapAPI = "https://map.naver.com/v5/api/transit/subway/stations/40230/schedule?lang=ko&stationID=40230"
-    req = urllib.request.Request(NaverMapAPI, data=None,
-                                 headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'}
-                                )
-    try:
-        with urllib.request.urlopen(NaverMapAPI) as response:
-            Encoding = response.info().get_content_charset()
-            Data = response.read()
-            
-        jsonData = json.loads(Data.decode(Encoding))
-        todayServiceDay = jsonData['todayServiceDay']['name']
-
-        return todayServiceDay
+def GetTodayServiceDayPAData():
+    global PAData
+    if PAData == None :
+        LoadData()
+    NowDate = time.strftime("%Y%m%d")
+    NowYear = time.strftime("%Y")
+    DataYear = str(PAData['response']['body']['items']['item'][0]['locdate'])[:4]
+    if DataYear != NowYear:
+        LoadData()
+    for el in PAData['response']['body']['items']['item']:
+        if el['locdate'] == int(NowDate):
+            return "휴일"
         
-    except urllib.error.HTTPError as e:
-        print(e.__dict__)
-        return -1
     
-    except:
-        return -1
-
 def GetTodayServiceDayLocal():
     Localwday = time.localtime().tm_wday
     if Localwday == 5 :
@@ -74,17 +77,12 @@ def GetTodayServiceDayLocal():
     else:
         return "평일"
 
+
 def GetTodayServiceDay():
-    Localwday = GetTodayServiceDayLocal()
-    if Localwday == "휴일":
-        return Localwday
+    if GetTodayServiceDayLocal() == "휴일":
+        return "휴일"
+    elif GetTodayServiceDayPAData() == "휴일":
+        return "휴일"
     else:
-        Naverwday = GetTodayServiceDayNaver()
-        if Naverwday != -1:
-            return Naverwday
-        NaverwdayPC = GetTodayServiceDayNaverPC()
-        if NaverwdayPC != -1:
-            return NaverwdayPC
-    return Localwday
-                    
+        return GetTodayServiceDayLocal()
 
