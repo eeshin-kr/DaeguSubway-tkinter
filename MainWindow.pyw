@@ -8,6 +8,7 @@ import GetDayType
 import SettingsManager
 import TimeTableWindow
 
+Next_Update_DayType_Time = "01:00:00"
 Version = "0.5.6"
 class MainWindow(tk.Tk):
     Title = "열차 시간 알리미"
@@ -22,7 +23,6 @@ class MainWindow(tk.Tk):
         self.Set_UI()
         self.Set_ProcessClassInit()
         self.Update_DayType()
-        self.Update_UI_Label()
         self.Update_TrainInfo()
 
         
@@ -56,18 +56,21 @@ class MainWindow(tk.Tk):
         TodayType = GetDayType.GetTodayServiceDay()
         if TodayType in self.CSV.GetDayTypeList() :
             self.CurrentDayType = TodayType
+            
         
         # 지금 시각과 24:00 사이의 초를 계산, 그 후 지정된 시간 만큼 초 더한 뒤 Millsec으로 변환
-        NextLaunchTime = (TimeDiffInt("24:00:00")+SettingsManager.NextLaunchHour*3600) * 1000
+        NextLaunchTime = (TimeDiffInt("24:00:00")+TimeStr_2_Sec(Next_Update_DayType_Time)) * 1000
+        self.Update_UI_Label()#UI 라벨, 값 업데이트
         self.after(NextLaunchTime, self.Update_DayType)
 
     def Update_UI_Label(self):
         LineList = self.Settings.GetLineTotal()
         DayTypeList = self.CSV.GetDayTypeList()
-        self.UIMenuBar.ChangeVar(self.CurrentLine, self.CurrentStation, self.CurrentDayType)
         self.UIMenuBar.ChangeLabel(LineList, self.StationList, DayTypeList)
+        self.UIMenuBar.ChangeVar(self.CurrentLine, self.CurrentStation, self.CurrentDayType)
         self.UIFrame.UpdateLabel([self.CurrentStation, self.CurrentDayType, self.StationList[0] ,self.StationList[-1] ])
-    
+        
+
     def Update_TrainInfo(self):
 
         TmpList0 = []

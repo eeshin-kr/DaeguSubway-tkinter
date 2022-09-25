@@ -4,9 +4,6 @@
 import configparser
 import os
 
-### 메인 창 모듈의 AutoGetServiceDay이 작동될 시각을 정합니다.
-NextLaunchHour = 5 #휴일 정보를 받아올 시각 (24시간)
-
  #설정 파일명 설정
 DirName = './Cache/'
 FileName = 'Settings.ini'
