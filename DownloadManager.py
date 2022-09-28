@@ -23,14 +23,14 @@ def GetDBD(LineNum):
     시간표(Database)의 최신 수정일자(Date)를 받아오기 위한 함수입니다.
     '''
     try:
-        jsonURL = JSON_CASE[LineNum]
-        jsonURLOpen = urllib.request.urlopen(url=jsonURL)
-        jsonURLData = jsonURLOpen.read()
-        Encoding = jsonURLOpen.info().get_content_charset()
-        jsonData = json.loads(jsonURLData.decode(Encoding))
-        LastModified = jsonData['dateModified']
+        json_url = JSON_CASE[LineNum]
+        json_open = urllib.request.urlopen(url=json_url)
+        json_open_read = json_open.read()
+        json_encoding = json_open.info().get_content_charset()
+        json_data = json.loads(json_open_read.decode(json_encoding))
+        date_last_modified = json_data['dateModified']
 
-        return LastModified
+        return date_last_modified
     except TimeoutError as e:
         print("타임아웃 에러 발생")
         return -1
@@ -47,30 +47,30 @@ def DownloadFromJson(LineNum):
     JSON 파일로 부터 시간표 파일을 받아오기 위한 함수입니다.
     '''
     try:
-        jsonURL = JSON_CASE[LineNum]
-        jsonURLOpen = urllib.request.urlopen(url=jsonURL)
-        jsonURLData = jsonURLOpen.read()
-        Encoding = jsonURLOpen.info().get_content_charset()
-        jsonData = json.loads(jsonURLData.decode(Encoding))
+        json_url = JSON_CASE[LineNum]
+        json_open = urllib.request.urlopen(url=json_url)
+        json_open_read = json_open.read()
+        json_encoding = json_open.info().get_content_charset()
+        json_data = json.loads(json_open_read.decode(json_encoding))
 
-        DistributionData = jsonData['distribution']
-        DistributionDict = dict(DistributionData[0])
-        CSVDownloadURL = DistributionDict['contentUrl']
+        distribution_data = json_data['distribution']
+        distribution_dict = dict(distribution_data[0])
+        csv_download_url = distribution_dict['contentUrl']
 
-        CSVDownloadOpen = urllib.request.urlopen(url=CSVDownloadURL)
-        CSVDownloadData = CSVDownloadOpen.read()
+        csv_download_open = urllib.request.urlopen(url=csv_download_url)
+        csv_download_data = csv_download_open.read()
         if LineNum == 2 :
-            CSVDownloadData = CSVFix(CSVDownloadData)
+            csv_download_data = CSVFix(csv_download_data)
         #파일 이름 가져오기
-        CSVDownloadName_raw = CSVDownloadOpen.headers.get_filename()
-        CSVDownloadName = CSVDownloadName_raw.encode('ISO-8859-1').decode('utf-8') #파일 이름이 ISO-8859-1로 인코딩 되어 있음...
+        csv_download_file_name_raw = csv_download_open.headers.get_filename()
+        csv_download_file_name = csv_download_file_name_raw.encode('ISO-8859-1').decode('utf-8') #파일 이름이 ISO-8859-1로 인코딩 되어 있음...
         if os.path.isdir('./Cache') == False :
             os.mkdir('./Cache')
         #파일 저장하기
-        with open(f'./Cache/{CSVDownloadName}', mode="wb") as file:
-            file.write(CSVDownloadData)
+        with open(f'./Cache/{csv_download_file_name}', mode="wb") as file:
+            file.write(csv_download_data)
         #설정파일에 파일 수정일 및 파일명 저장
-        SettingsManager.SettingsClass().DatabaseInfoSave(line = LineNum, date = GetDBD(LineNum), filename=CSVDownloadName)
+        SettingsManager.SettingsClass().DatabaseInfoSave(line = LineNum, date = GetDBD(LineNum), filename=csv_download_file_name)
         return 0
 
     except (TimeoutError, urllib.error.URLError) as e:

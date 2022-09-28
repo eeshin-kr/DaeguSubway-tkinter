@@ -5,42 +5,42 @@ import configparser
 import os
 
  #설정 파일명 설정
-DirName = './Cache/'
-FileName = 'Settings.ini'
-FullFilePath = DirName + FileName
+DIR_NAME = './Cache/'
+FILE_NAME = 'Settings.ini'
+FILE_PATH = DIR_NAME + FILE_NAME
 
 #설정 파일 내부 설정
-SectionName = 'Settings'
-SectionName2 = 'DatabaseUpdateDate'
-SectionName3 = 'DatabaseFileName'
+Section_Name_1 = 'Settings'
+Section_Name_2 = 'DatabaseUpdateDate'
+Section_Name_3 = 'DatabaseFileName'
 
 #어느 모듈에서도 설정 값을 가져올 수 있는 MagicWord 설정
-MagicWord_Line = 'line'
-MagicWord_Station = 'station'
-MagicWord_Line1_DB = 'line1'
-MagicWord_Line2_DB = 'line2'
-MagicWord_Line3_DB = 'line3'
+MAGICWORD_LINE = 'line'
+MAGICWORD_STATION = 'station'
+MAGICWORD_LINE1_DB = 'line1'
+MAGICWORD_LINE2_DB = 'line2'
+MAGICWORD_LINE3_DB = 'line3'
 
 #호선별 SWITCH_CASE문을 사용하기 위한 딕셔너리 자료형입니다.
-SETDBDATE_CASE = {1:MagicWord_Line1_DB,
-               2:MagicWord_Line2_DB,
-               3:MagicWord_Line3_DB }
+SETDBDATE_CASE = {1:MAGICWORD_LINE1_DB,
+               2:MAGICWORD_LINE2_DB,
+               3:MAGICWORD_LINE3_DB }
 
 ConfigStyle = configparser.ConfigParser()
 
-ConfigStyle[SectionName] = {
-    MagicWord_Line: '2',
-    MagicWord_Station: '용산' }
+ConfigStyle[Section_Name_1] = {
+    MAGICWORD_LINE: '2',
+    MAGICWORD_STATION: '용산' }
 
-ConfigStyle[SectionName2] = {
-    MagicWord_Line1_DB: '',
-    MagicWord_Line2_DB: '',
-    MagicWord_Line3_DB: '' }
+ConfigStyle[Section_Name_2] = {
+    MAGICWORD_LINE1_DB: '',
+    MAGICWORD_LINE2_DB: '',
+    MAGICWORD_LINE3_DB: '' }
 
-ConfigStyle[SectionName3] = {
-    MagicWord_Line1_DB: '',
-    MagicWord_Line2_DB: '',
-    MagicWord_Line3_DB: '' }
+ConfigStyle[Section_Name_3] = {
+    MAGICWORD_LINE1_DB: '',
+    MAGICWORD_LINE2_DB: '',
+    MAGICWORD_LINE3_DB: '' }
 
 
 class SettingsClass:
@@ -51,26 +51,26 @@ class SettingsClass:
         self.LoadSettingFile()
 
     def LoadSettingFile(self):        
-        self.dataset = self.config.read(FullFilePath)
+        self.dataset = self.config.read(FILE_PATH)
 
         ### 메인 부분 파일이 존재하지 않을 때 설정 파일 생성
-        if os.path.isdir(DirName) == False :
-            os.mkdir(DirName)
+        if os.path.isdir(DIR_NAME) == False :
+            os.mkdir(DIR_NAME)
             
-        if FullFilePath not in self.dataset :
+        if FILE_PATH not in self.dataset :
             self.config = ConfigStyle
             self.SaveToFile()
         
 
     def LastLineLoad(self) :
 
-        return int(dict(self.config[SectionName])[MagicWord_Line])
+        return int(dict(self.config[Section_Name_1])[MAGICWORD_LINE])
 
     def LastStationLoad(self) :
         '''
         사용자의 호선 및 역 설정 값을 불러들이는 메소드입니다.
         '''
-        return dict(self.config[SectionName])[MagicWord_Station]
+        return dict(self.config[Section_Name_1])[MAGICWORD_STATION]
 
 
     def StationChangeSave(self,line, station) :
@@ -78,8 +78,8 @@ class SettingsClass:
         사용자의 호선 및 역 설정 값을 저장하는 함수입니다.
         '''
         self.LoadSettingFile()
-        self.config[SectionName][MagicWord_Line] = str(line)
-        self.config[SectionName][MagicWord_Station] = station
+        self.config[Section_Name_1][MAGICWORD_LINE] = str(line)
+        self.config[Section_Name_1][MAGICWORD_STATION] = station
         self.SaveToFile()
         
     
@@ -87,21 +87,21 @@ class SettingsClass:
         '''
         저장된 시간표 파일의 정보에 관한 정보를 불러들이는 함수입니다.
         '''
-        return dict(self.config[SectionName2])
+        return dict(self.config[Section_Name_2])
 
     def DatabaseFileNameLoad(self, line):
         '''
         저장된 시간표 파일의 정보를 불러들이는 함수입니다.
         '''
-        return self.config[SectionName3][SETDBDATE_CASE[line]]
+        return self.config[Section_Name_3][SETDBDATE_CASE[line]]
         
 
     def DatabaseInfoSave(self, line, date, filename):
         '''
         저장한 시간표 파일의 정보를 설정파일에 기록하는 함수입니다.
         '''
-        self.config[SectionName2][SETDBDATE_CASE[line]] = date
-        self.config[SectionName3][SETDBDATE_CASE[line]] = filename
+        self.config[Section_Name_2][SETDBDATE_CASE[line]] = date
+        self.config[Section_Name_3][SETDBDATE_CASE[line]] = filename
         self.SaveToFile()
 
     def GetLineTotal(self):
@@ -111,7 +111,7 @@ class SettingsClass:
         return list(SETDBDATE_CASE.keys())
 
     def SaveToFile(self):
-        with open(FullFilePath, 'w') as FILE:
-            self.config.write(FILE)
+        with open(FILE_PATH, 'w') as File:
+            self.config.write(File)
         
 
