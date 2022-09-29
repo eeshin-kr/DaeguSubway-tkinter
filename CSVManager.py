@@ -16,41 +16,41 @@ class CSVClass:
     col_idx_station = None
 
     def __init__(self, Line):
-        self.SetLine(Line)
+        self.set_line(Line)
 
-    def SetLine(self, Line):
-        return self.LoadFile(Line)
+    def set_line(self, Line):
+        return self.load_file(Line)
                 
-    def LoadFile(self, Line):
+    def load_file(self, Line):
         try:
-            csv_file_name = SettingsManager.SettingsClass().DatabaseFileNameLoad(Line)
+            csv_file_name = SettingsManager.SettingsClass().load_timetable_file_name(Line)
             if csv_file_name == "":
                 raise FileNotFoundError
             with open(f'./Cache/{csv_file_name}', 'r', encoding='euc-kr') as File: 
                 self.csv_data = list(csv.reader(File))
             self.current_line = Line
-            self.AnalyzeCSV()
+            self.analyze_CSV()
             return 0
             
         except FileNotFoundError as Error:
             if msgbox.askyesno(title="열차 시간표 알리미",
                                            message=f'{Line}호선 시간표 파일을 찾을 수 없습니다. 다운로드 하시겠습니까?',
                                            icon = 'warning'):
-                try_download = DownloadManager.DownloadFromJson(Line)
+                try_download = DownloadManager.download_from_json(Line)
                 
                 if try_download != 0:
                     if msgbox.askyesno(title="다운로드 중 오류가 발생했습니다.",message=try_download+"\n 재시도 하시겠습니까?",icon = 'error'):
-                        self.LoadFile(Line)
+                        self.load_file(Line)
                     return -1
                 else:
-                    return self.LoadFile(Line)
+                    return self.load_file(Line)
             return -1
             
         except:
             msgbox.showerror(title="CSV 파일을 읽는 도중 오류 발생", message="CSV 파일을 읽는 도중 오류가 발생하였습니다.")
             return -1
         
-    def AnalyzeCSV(self):
+    def analyze_CSV(self):
         col_word_day = "요일별" #헤더 행 검색시 사용
         col_word_station="역명"  #헤더 행 검색시 사용
         sel_direction = "하"  #역사 리스트 작성 시 하선 기준 검색
@@ -87,7 +87,7 @@ class CSVClass:
         self.col_idx_station = col_idx_station
 
 
-    def GetStationTimeDict(self, DayType, Direction, Station):
+    def get_train_time_dict(self, DayType, Direction, Station):
         arrive_departure_type = "도착"
         train_time_dict = {}
 
@@ -111,9 +111,9 @@ class CSVClass:
         return dict(sorted(train_time_dict.items()))
                 
         
-    def CreateNowNextTrainClass(self, DayType, Direction, Station):
+    def create_NowNextTrainClass(self, DayType, Direction, Station):
         
-        train_dict = self.GetTrainDict(DayType, Direction)
+        train_dict = self.get_train_dict(DayType, Direction)
         train_dict_refined = {}
         for (train_number, train_time_list) in train_dict.items():
 
@@ -135,7 +135,7 @@ class CSVClass:
             destination = self.current_station_list[train_dict[train_number].index(tmp_time)]
             #열차 목적지 찾기 끝
 
-            arrive_time_sec = TimeStr_2_Sec(arrive_time)
+            arrive_time_sec = timestr_to_sec(arrive_time)
             train_dict_refined[train_number] = {"ArriveTime": arrive_time,
                                                 "ArriveTimeSec" : arrive_time_sec,
                                                 "Destination": destination}
@@ -153,26 +153,26 @@ class CSVClass:
             self.train_number_first_sec = TrainDict[train_number_first]["ArriveTimeSec"]
             self.train_number_last_sec = TrainDict[self.train_number_last]["ArriveTimeSec"]
             
-        def SearchTrainNo(self, TargetTimeStr):
-            target_time_sec = TimeStr_2_Sec(TargetTimeStr)
+        def search_train_number(self, TargetTimeStr):
+            target_time_sec = timestr_to_sec(TargetTimeStr)
             if target_time_sec < self.train_number_last_sec and  self.train_number_last_sec < self.train_number_first_sec :
-                target_time_sec = target_time_sec + TimeStr_2_Sec("24:00:00")
+                target_time_sec = target_time_sec + timestr_to_sec("24:00:00")
                 
                 
             for (train_number, value) in self.train_dict.items() :
 
                 search_time_sec = value["ArriveTimeSec"]
                 if value["ArriveTimeSec"] < self.train_number_first_sec :
-                    search_time_sec = search_time_sec + TimeStr_2_Sec("24:00:00")
+                    search_time_sec = search_time_sec + timestr_to_sec("24:00:00")
 
                 if search_time_sec > target_time_sec :
                     return train_number
 
             return -1
             
-        def GetNowNextTrain(self):
+        def get_NowNextTrain(self):
             time_now = time.strftime("%H:%M:%S")
-            train_number_now = self.SearchTrainNo(time_now)
+            train_number_now = self.search_train_number(time_now)
 
             if train_number_now == -1 :
                 return [-1, -1]
@@ -183,13 +183,13 @@ class CSVClass:
             if train_number_now == self.train_number_last :
                 return [train_number_now_info , -1]
             
-            train_number_next = self.SearchTrainNo(train_number_now_info["ArriveTime"])
+            train_number_next = self.search_train_number(train_number_now_info["ArriveTime"])
             train_number_next_info = self.train_dict[train_number_next]
             train_number_next_info["TrainNumber"] = train_number_next
             
             return [train_number_now_info, train_number_next_info]
    
-    def GetTrainDict(self, DayType, Direction):
+    def get_train_dict(self, DayType, Direction):
         arrive_departure_type = "도착"
         station_idx_current = None
         train_number_dict = {}
@@ -227,14 +227,14 @@ class CSVClass:
 
         return train_number_dict
 
-    def GetStationList(self):
+    def get_station_list(self):
         return self.current_station_list
     
-    def GetDayTypeList(self):
+    def get_daytype_list(self):
         return self.daytype_list
 
-    def GetTrainDestination(self, DayType, Direction, Station, TargetTime):
-        train_dict = self.GetTrainDict(DayType, Direction)
+    def get_train_destination(self, DayType, Direction, Station, TargetTime):
+        train_dict = self.get_train_dict(DayType, Direction)
         station_dict_idx = self.current_station_list.index(Station)
         train_number_target = None
         tmp_time = None
@@ -258,7 +258,7 @@ class CSVClass:
         return destination
             
 
-def TimeStr_2_Sec(TStr):
+def timestr_to_sec(TStr):
     tmp_array = TStr.split(':')
     tmp_list = list(map(int,tmp_array))
     tmp_int = tmp_list[0] * 3600 + tmp_list[1] * 60 + tmp_list[2]
@@ -266,8 +266,8 @@ def TimeStr_2_Sec(TStr):
 
 
 #a = CSVClass(2) 
-#na = a.CreateNowNextTrainClass("평일","상", "이곡")
-#print(na.GetNowNextTrain())
-#print(a.GetStationTimeDict('평일', '상', '수성구청'))
-#print(a.GetTrainDestination('평일', '하', '용산', '23:35:15'))
+#na = a.create_NowNextTrainClass("평일","상", "이곡")
+#print(na.get_NowNextTrain())
+#print(a.get_train_time_dict('평일', '상', '수성구청'))
+#print(a.get_train_destination('평일', '하', '용산', '23:35:15'))
 

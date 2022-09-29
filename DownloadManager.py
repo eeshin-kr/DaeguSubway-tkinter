@@ -18,7 +18,7 @@ JSON_CASE = {1: Line1,
 
 
 
-def GetDBD(LineNum):
+def get_timetable_last_date(LineNum):
     '''
     시간표(Database)의 최신 수정일자(Date)를 받아오기 위한 함수입니다.
     '''
@@ -42,7 +42,7 @@ def GetDBD(LineNum):
 
 
 
-def DownloadFromJson(LineNum):
+def download_from_json(LineNum):
     '''
     JSON 파일로 부터 시간표 파일을 받아오기 위한 함수입니다.
     '''
@@ -60,7 +60,7 @@ def DownloadFromJson(LineNum):
         csv_download_open = urllib.request.urlopen(url=csv_download_url)
         csv_download_data = csv_download_open.read()
         if LineNum == 2 :
-            csv_download_data = CSVFix(csv_download_data)
+            csv_download_data = fix_CSV(csv_download_data)
         #파일 이름 가져오기
         csv_download_file_name_raw = csv_download_open.headers.get_filename()
         csv_download_file_name = csv_download_file_name_raw.encode('ISO-8859-1').decode('utf-8') #파일 이름이 ISO-8859-1로 인코딩 되어 있음...
@@ -70,7 +70,7 @@ def DownloadFromJson(LineNum):
         with open(f'./Cache/{csv_download_file_name}', mode="wb") as file:
             file.write(csv_download_data)
         #설정파일에 파일 수정일 및 파일명 저장
-        SettingsManager.SettingsClass().DatabaseInfoSave(line = LineNum, date = GetDBD(LineNum), filename=csv_download_file_name)
+        SettingsManager.SettingsClass().save_timetable_file_info(line = LineNum, date = get_timetable_last_date(LineNum), filename=csv_download_file_name)
         return 0
 
     except (TimeoutError, urllib.error.URLError) as e:
@@ -79,7 +79,7 @@ def DownloadFromJson(LineNum):
     
     
 ##2호선에 신매역이 신내역으로 기록, 이름 수정함
-def CSVFix(CSV_Byte):
+def fix_CSV(CSV_Byte):
     '''
     외부의 CSV 파일에 문제가 있을 경우 CSV파일을 수정하기 위해 사용하는 함수입니다.
     '''
@@ -87,12 +87,12 @@ def CSVFix(CSV_Byte):
     CSV_Byte = CSV_Byte.replace("신내","신매") #2호선 파일에 신매역이 신내역으로 기록되어 있음
     return CSV_Byte.encode('euc-kr')
 
-def isUpdateAvailable(LineNum):
+def check_timetable_update(LineNum):
     '''
     설정 파일의 수정일과 외부 파일의 수정일을 비교하여 업데이트가 필요한지 확인하는 함수입니다.
     '''
-    LastDBD = GetDBD(LineNum)
-    SavedDBD = SettingsManager.SettingsClass().DatabaseInfoLoad()[SettingsManager.SETDBDATE_CASE[LineNum]]
+    LastDBD = get_timetable_last_date(LineNum)
+    SavedDBD = SettingsManager.SettingsClass().load_timetable_file_update_date()[SettingsManager.SETDBDATE_CASE[LineNum]]
     if LastDBD == -1 :
         return -1
     elif LastDBD != SavedDBD :

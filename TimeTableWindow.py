@@ -9,10 +9,9 @@ import SettingsManager
 TopWinLine = None
 TopWinStation = None
 TopWinDayType = None
+Window_Title="시간표"
 
 class TimeTableWindow(tk.Toplevel):
-    TimeTableWin = None
-    Title="시간표"
     tkmaster = None
 
     def __init__(self, master, Line , Station, DayType):
@@ -25,11 +24,11 @@ class TimeTableWindow(tk.Toplevel):
         TopWinStation = Station
         TopWinDayType = DayType
         
-        self.Set_Window()
+        self.set_window()
         Notebook = self.NotebookClass(self)
 
-    def Set_Window(self):
-        self.title (f'{self.Title}')
+    def set_window(self):
+        self.title(f'{Window_Title}')
         self.geometry("600x500")
         #self.attributes("-toolwindow", True)
 
@@ -40,9 +39,9 @@ class TimeTableWindow(tk.Toplevel):
             super().__init__(master)
             self.tkmaster = master
             self.pack(fill = tk.BOTH, expand=True, pady=2)
-            self.Draw_Main_UI()
+            self.draw_mainUI()
 
-        def Draw_Main_UI(self):
+        def draw_mainUI(self):
             self.page1 = self.Frame1(self)
             self.page2 = self.Frame2(self)
             self.add(self.page1, text="역사별 시간표")
@@ -55,12 +54,12 @@ class TimeTableWindow(tk.Toplevel):
             def __init__(self, master):
                 super().__init__(master)
                 parent = master
-                self.Set_ProcessClassInit()
-                self.DrawUI()
+                self.set_vars()
+                self.draw_UI()
                 self.UpdateTable()
                 
 
-            def Set_ProcessClassInit(self):
+            def set_vars(self):
                 global TopWinLine
                 global TopWinStation
                 global TopWinDayType
@@ -68,8 +67,8 @@ class TimeTableWindow(tk.Toplevel):
                 self.station = TopWinStation
                 self.daytype = TopWinDayType
                 self.CSV = CSVManager.CSVClass(self.line)
-                self.station_list = self.CSV.GetStationList()
-                self.daytype_list = self.CSV.GetDayTypeList()
+                self.station_list = self.CSV.get_station_list()
+                self.daytype_list = self.CSV.get_daytype_list()
                 self.var_selection_line = tk.IntVar(value = self.line)
                 self.var_selection_line_2 = tk.IntVar(value = self.line)
                 self.var_selection_station = tk.StringVar(value = self.station) 
@@ -81,7 +80,7 @@ class TimeTableWindow(tk.Toplevel):
                 self.var_right_train_last = tk.StringVar(value = "- (-행)")
                 self.var_right_train_last_2 = tk.StringVar(value = "- (-행)")
 
-            def DrawUI(self):
+            def draw_UI(self):
                 self.TFrame0 = tk.LabelFrame(master = self, labelanchor="n", text="호선 설정")
                 self.TFrame1 = tk.LabelFrame(master = self, labelanchor="n", text="역 설정")
                 self.TFrame2 = tk.LabelFrame(master = self, labelanchor="n", text="휴일 설정")
@@ -90,9 +89,9 @@ class TimeTableWindow(tk.Toplevel):
                 self.TFrame5 = tk.Frame(master= self.TFrame3)
                 self.TFrame6 = tk.Frame(master= self.TFrame4)
                 
-                self.TSpinBox = ttk.Spinbox(master = self.TFrame0, from_ = SettingsManager.SettingsClass().GetLineTotal()[0],
-                                            to= SettingsManager.SettingsClass().GetLineTotal()[-1],
-                                            textvariable = self.var_selection_line_2, command = self.ChangeLine)
+                self.TSpinBox = ttk.Spinbox(master = self.TFrame0, from_ = SettingsManager.SettingsClass().get_total_line()[0],
+                                            to= SettingsManager.SettingsClass().get_total_line()[-1],
+                                            textvariable = self.var_selection_line_2, command = self.change_line)
                 self.TComboBox = ttk.Combobox(master = self.TFrame1, textvariable = self.var_selection_station)
                 self.TComboBox['values'] = self.station_list
                 
@@ -122,7 +121,7 @@ class TimeTableWindow(tk.Toplevel):
                 self.TFrame5.pack(fill=tk.X)
                 self.TFrame6.pack(fill=tk.X)
                 self.TSpinBox.pack(fill=tk.X, expand=True, padx = 2, pady = 2)
-                self.TSpinBox.bind('<Return>', lambda e: self.ChangeLine())
+                self.TSpinBox.bind('<Return>', lambda e: self.change_line())
                 self.TComboBox.pack(fill=tk.X, expand=True, padx = 2, pady = 2)
                 self.TComboBox.bind('<<ComboboxSelected>>', lambda e: self.UpdateTable())
                 self.TComboBox.bind('<Return>', lambda e: self.UpdateTable())
@@ -165,11 +164,11 @@ class TimeTableWindow(tk.Toplevel):
                 self.T_LEFT_ListBox.delete(0, tk.END) #리스트 박스 초기화
                 self.T_RIGHT_ListBox.delete(0, tk.END)
 
-                timetable_list_left = self.CSV.GetStationTimeDict(DayType = self.var_selection_daytype.get(),
+                timetable_list_left = self.CSV.get_train_time_dict(DayType = self.var_selection_daytype.get(),
                                                                   Direction="상",
                                                                   Station= self.var_selection_station.get())
                 
-                timetable_list_right = self.CSV.GetStationTimeDict(DayType = self.var_selection_daytype.get(),
+                timetable_list_right = self.CSV.get_train_time_dict(DayType = self.var_selection_daytype.get(),
                                                                    Direction="하",
                                                                    Station= self.var_selection_station.get())
 
@@ -177,14 +176,14 @@ class TimeTableWindow(tk.Toplevel):
                     self.T_LEFT_ListBox.insert(tk.END, f'{train_number} | {train_time[:-3]}')
 
                 for (train_number, train_time)  in list(timetable_list_left.items())[-2:]  :
-                    Dest = self.CSV.GetTrainDestination(Direction = "상", Station = self.var_selection_station.get(), DayType = self.var_selection_daytype.get(), TargetTime = train_time)
+                    Dest = self.CSV.get_train_destination(Direction = "상", Station = self.var_selection_station.get(), DayType = self.var_selection_daytype.get(), TargetTime = train_time)
                     self.T_LEFT_ListBox.insert(tk.END, f'{train_number} | {train_time[:-3]} ({Dest} 행)')
 
                 for (train_number, train_time)  in list(timetable_list_right.items())[:-2] :
                     self.T_RIGHT_ListBox.insert(tk.END, f'{train_number} | {train_time[:-3]}')
                     
                 for (train_number, train_time)  in list(timetable_list_right.items())[-2:]  :
-                    Dest = self.CSV.GetTrainDestination(Direction = "하", Station = self.var_selection_station.get(), DayType = self.var_selection_daytype.get(), TargetTime = train_time)
+                    Dest = self.CSV.get_train_destination(Direction = "하", Station = self.var_selection_station.get(), DayType = self.var_selection_daytype.get(), TargetTime = train_time)
                     self.T_RIGHT_ListBox.insert(tk.END, f'{train_number} | {train_time[:-3]} ({Dest} 행)')
 
                 self.var_left_train_first.set(f'{self.T_LEFT_ListBox.get(0)}')
@@ -196,12 +195,12 @@ class TimeTableWindow(tk.Toplevel):
                 self.var_right_train_last_2.set(f'{self.T_RIGHT_ListBox.get(self.T_RIGHT_ListBox.size()-1)}')
 
                 
-            def ChangeLine(self):
-                if self.CSV.SetLine(self.var_selection_line_2.get()) == -1:
+            def change_line(self):
+                if self.CSV.set_line(self.var_selection_line_2.get()) == -1:
                     self.var_selection_line_2.set(self.var_selection_line.get())
                     return -1
                 self.var_selection_line.set(self.var_selection_line_2.get())
-                self.station_list = self.CSV.GetStationList()
+                self.station_list = self.CSV.get_station_list()
                 self.var_selection_station.set(self.station_list[0])
                 self.TComboBox['values'] = self.station_list
                 self.TFrame3.config(text=f'{self.station_list[0]} 방면')
@@ -212,22 +211,22 @@ class TimeTableWindow(tk.Toplevel):
 
             def __init__(self, master):
                 super().__init__(master)
-                self.Set_ProcessClassInit()
-                self.DrawUI()
-                self.UpdateTreeView()
+                self.set_vars()
+                self.draw_UI()
+                self.update_treeview()
 
-            def Set_ProcessClassInit(self):
+            def set_vars(self):
                 global TopWinLine
                 global TopWinDayType
                 self.CSV = CSVManager.CSVClass(TopWinLine)
-                self.station_list = self.CSV.GetStationList()
-                self.daytype_list = self.CSV.GetDayTypeList()
+                self.station_list = self.CSV.get_station_list()
+                self.daytype_list = self.CSV.get_daytype_list()
                 self.var_selection_line = tk.IntVar(value = TopWinLine)
                 self.var_selection_line_2 = tk.IntVar(value = TopWinLine)
                 self.var_selection_direction = tk.StringVar(value = "상")
                 self.var_selection_daytype = tk.StringVar(value = TopWinDayType)
 
-            def DrawUI(self):
+            def draw_UI(self):
                 self.columnconfigure(1, weight=1)
                 self.rowconfigure(0,weight=1)
                 self.OptionFrame = tk.Frame(master = self)
@@ -236,17 +235,17 @@ class TimeTableWindow(tk.Toplevel):
                 self.TFrame1 = tk.LabelFrame(master = self.OptionFrame, text="상/하선", labelanchor="n")
                 self.TFrame2 = tk.LabelFrame(master = self.OptionFrame, text="휴일", labelanchor="n")
             
-                self.TSpinBox = ttk.Spinbox(master = self.TFrame0, from_ = SettingsManager.SettingsClass().GetLineTotal()[0],
-                            to= SettingsManager.SettingsClass().GetLineTotal()[-1],
-                            textvariable = self.var_selection_line_2, command = self.ChangeLine)
+                self.TSpinBox = ttk.Spinbox(master = self.TFrame0, from_ = SettingsManager.SettingsClass().get_total_line()[0],
+                            to= SettingsManager.SettingsClass().get_total_line()[-1],
+                            textvariable = self.var_selection_line_2, command = self.change_line)
 
                 self.TRadioButtonGroup0 = []
                 self.TRadioButtonGroup0.append( tk.Radiobutton(master = self.TFrame1, text = f'{self.station_list[0]} 방면',
-                                                   variable = self.var_selection_direction, value = "상", command = self.UpdateTreeView)
+                                                   variable = self.var_selection_direction, value = "상", command = self.update_treeview)
                                                 )
                 
                 self.TRadioButtonGroup0.append( tk.Radiobutton(master = self.TFrame1, text = f'{self.station_list[-1]} 방면',
-                                                   variable = self.var_selection_direction, value = "하", command = self.UpdateTreeView)
+                                                   variable = self.var_selection_direction, value = "하", command = self.update_treeview)
                                                 )
                 
                 self.TRadioButtonGroup0[0].pack(side=tk.TOP, anchor="w")
@@ -254,7 +253,7 @@ class TimeTableWindow(tk.Toplevel):
                         
 
                 for daytype in self.daytype_list:
-                    TRadioButton1 = tk.Radiobutton(master = self.TFrame2, text=daytype, variable = self.var_selection_daytype, value=daytype, command = self.UpdateTreeView)
+                    TRadioButton1 = tk.Radiobutton(master = self.TFrame2, text=daytype, variable = self.var_selection_daytype, value=daytype, command = self.update_treeview)
                     TRadioButton1.pack(side=tk.TOP, anchor="w")
 
                 self.TreeView = ttk.Treeview(master = self)
@@ -279,7 +278,7 @@ class TimeTableWindow(tk.Toplevel):
                 ScrollBarY.grid(row = 0, column = 2, sticky = "sn")
                 SizeGrip.grid(row=1, column=2, sticky=tk.SE)
 
-            def UpdateTreeView(self):
+            def update_treeview(self):
                 self.TreeView.delete(*self.TreeView.get_children()) #Treeview 내용 제거
 
                 if self.var_selection_direction.get() == "상":
@@ -291,7 +290,7 @@ class TimeTableWindow(tk.Toplevel):
                     self.TreeView.column(col, anchor=tk.CENTER, width=60, stretch=False) 
                     self.TreeView.heading( col, text=col, anchor=tk.CENTER)
 
-                TrainDict = self.CSV.GetTrainDict(DayType = self.var_selection_daytype.get(),
+                TrainDict = self.CSV.get_train_dict(DayType = self.var_selection_daytype.get(),
                                                   Direction = self.var_selection_direction.get())
 
 
@@ -312,15 +311,15 @@ class TimeTableWindow(tk.Toplevel):
                     self.TreeView.insert(parent='', index='end', iid=key, values=newlist)
 
 
-            def ChangeLine(self):
-                if self.CSV.SetLine(self.var_selection_line_2.get()) == -1:
+            def change_line(self):
+                if self.CSV.set_line(self.var_selection_line_2.get()) == -1:
                     self.var_selection_line_2.set(self.var_selection_line.get())
                     return -1
                 self.var_selection_line.set(self.var_selection_line_2.get())
-                self.station_list = self.CSV.GetStationList()
+                self.station_list = self.CSV.get_station_list()
                 self.TRadioButtonGroup0[0].config(text = f'{self.station_list[0]} 방면')
                 self.TRadioButtonGroup0[1].config(text = f'{self.station_list[-1]} 방면')                    
-                self.UpdateTreeView()
+                self.update_treeview()
 
 
                 

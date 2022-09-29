@@ -48,9 +48,9 @@ class SettingsClass:
 
     def __init__(self):
         self.config = configparser.ConfigParser()
-        self.LoadSettingFile()
+        self.load_setting_file()
 
-    def LoadSettingFile(self):        
+    def load_setting_file(self):        
         self.dataset = self.config.read(FILE_PATH)
 
         ### 메인 부분 파일이 존재하지 않을 때 설정 파일 생성
@@ -59,58 +59,58 @@ class SettingsClass:
             
         if FILE_PATH not in self.dataset :
             self.config = ConfigStyle
-            self.SaveToFile()
+            self.save_to_file()
         
 
-    def LastLineLoad(self) :
+    def load_last_used_line(self) :
 
         return int(dict(self.config[Section_Name_1])[MAGICWORD_LINE])
 
-    def LastStationLoad(self) :
+    def load_last_used_station(self) :
         '''
         사용자의 호선 및 역 설정 값을 불러들이는 메소드입니다.
         '''
         return dict(self.config[Section_Name_1])[MAGICWORD_STATION]
 
 
-    def StationChangeSave(self,line, station) :
+    def save_station_setting(self,line, station) :
         '''
         사용자의 호선 및 역 설정 값을 저장하는 함수입니다.
         '''
-        self.LoadSettingFile()
+        self.load_setting_file()
         self.config[Section_Name_1][MAGICWORD_LINE] = str(line)
         self.config[Section_Name_1][MAGICWORD_STATION] = station
-        self.SaveToFile()
+        self.save_to_file()
         
     
-    def DatabaseInfoLoad(self):
+    def load_timetable_file_update_date(self):
         '''
         저장된 시간표 파일의 정보에 관한 정보를 불러들이는 함수입니다.
         '''
         return dict(self.config[Section_Name_2])
 
-    def DatabaseFileNameLoad(self, line):
+    def load_timetable_file_name(self, line):
         '''
         저장된 시간표 파일의 정보를 불러들이는 함수입니다.
         '''
         return self.config[Section_Name_3][SETDBDATE_CASE[line]]
         
 
-    def DatabaseInfoSave(self, line, date, filename):
+    def save_timetable_file_info(self, line, date, filename):
         '''
         저장한 시간표 파일의 정보를 설정파일에 기록하는 함수입니다.
         '''
         self.config[Section_Name_2][SETDBDATE_CASE[line]] = date
         self.config[Section_Name_3][SETDBDATE_CASE[line]] = filename
-        self.SaveToFile()
+        self.save_to_file()
 
-    def GetLineTotal(self):
+    def get_total_line(self):
         '''
         몇 호선이 기록되어 있는지 알아내기 위한 함수
         '''
         return list(SETDBDATE_CASE.keys())
 
-    def SaveToFile(self):
+    def save_to_file(self):
         with open(FILE_PATH, 'w') as File:
             self.config.write(File)
         

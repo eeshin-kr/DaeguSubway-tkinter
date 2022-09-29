@@ -13,7 +13,7 @@ DEFAULT_PARAMETERS = {"serviceKey": "qwOsuA49e64sAt996zL7akPoB8B6xE8CyygnFiVOq24
                       "_type": "json"}
 PUBLIC_ANNIVERSARY_DATA = None
 
-def DownloadData():
+def download_PA_data():
     global PUBLIC_ANNIVERSARY_DATA
     global DEFAULT_PARAMETERS
     now_year = time.strftime("%Y")
@@ -36,7 +36,7 @@ def DownloadData():
     except json.decoder.JSONDecodeError:
         raise NameError("JSON 다운로드 실패")
         
-def LoadData():
+def load_PA_data():
     global PUBLIC_ANNIVERSARY_DATA
     now_year = time.strftime("%Y")
     PA_file_dir = "./Cache/"
@@ -50,24 +50,24 @@ def LoadData():
             raise FileNotFoundError
 
     except (FileNotFoundError, json.decoder.JSONDecodeError):
-        DownloadData()
+        download_PA_data()
 
 
-def GetTodayServiceDayPAData():
+def get_today_service_from_PA_data():
     global PUBLIC_ANNIVERSARY_DATA
     if PUBLIC_ANNIVERSARY_DATA == None :
-        LoadData()
+        load_PA_data()
     now_date = time.strftime("%Y%m%d")
     now_year = time.strftime("%Y")
     data_year = str(PUBLIC_ANNIVERSARY_DATA['response']['body']['items']['item'][0]['locdate'])[:4]
     if data_year != now_year:
-        LoadData()
+        load_PA_data()
     for el in PUBLIC_ANNIVERSARY_DATA['response']['body']['items']['item']:
         if el['locdate'] == int(now_date):
             return "휴일"
         
     
-def GetTodayServiceDayLocal():
+def get_today_service_from_local():
     now_weekday = time.localtime().tm_wday
     if now_weekday == 5 :
         return "토요일"
@@ -77,11 +77,11 @@ def GetTodayServiceDayLocal():
         return "평일"
 
 
-def GetTodayServiceDay():
-    if GetTodayServiceDayLocal() == "휴일":
+def get_today_service_day():
+    if get_today_service_from_local() == "휴일":
         return "휴일"
-    elif GetTodayServiceDayPAData() == "휴일":
+    elif get_today_service_from_PA_data() == "휴일":
         return "휴일"
     else:
-        return GetTodayServiceDayLocal()
+        return get_today_service_from_local()
 
