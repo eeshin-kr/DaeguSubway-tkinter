@@ -43,10 +43,13 @@ class MainWindow(tk.Tk):
         self.current_station = self.settings.load_last_used_station()
         self.current_station_list = self.CSV.get_station_list()
         self.current_daytype = self.CSV.get_daytype_list()[0]
-        self.CSV_NowNextTrain_Class_UP = self.CSV.create_NowNextTrainClass(self.current_daytype, "상", self.current_station)
-        self.CSV_NowNextTrain_Class_DOWN = self.CSV.create_NowNextTrainClass(self.current_daytype, "하", self.current_station)
         self.option_show_time_left = False
         self.option_show_train_number = False
+        self.set_now_next_train_class()
+
+    def set_now_next_train_class(self):
+        self.CSV_NowNextTrain_Class_UP = self.CSV.create_NowNextTrainClass(self.current_daytype, "상", self.current_station)
+        self.CSV_NowNextTrain_Class_DOWN = self.CSV.create_NowNextTrainClass(self.current_daytype, "하", self.current_station)
         
 
     def update_daytype(self):
@@ -61,6 +64,7 @@ class MainWindow(tk.Tk):
         # 지금 시각과 24:00 사이의 초를 계산, 그 후 지정된 시간 만큼 초 더한 뒤 Millsec으로 변환
         next_launch_time = (get_time_diff_from_now("24:00:00")+timestr_to_sec(NEXT_UPDATE_DAYTYPE_TIME)) * 1000
         self.update_UI_label()#UI 라벨, 값 업데이트
+        self.set_now_next_train_class()
         self.after(next_launch_time, self.update_daytype)
 
     def update_UI_label(self):
